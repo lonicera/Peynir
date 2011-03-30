@@ -279,7 +279,6 @@ def install(source):
 												
 					print(i.attrib["step"])
 				if position > 0:
-					print("offff")
 					command = ans_action[:position] + answer + ans_action[position+7:]
 					print(command)
 					execute(command)
