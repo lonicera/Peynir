@@ -22,8 +22,6 @@
 #       
 # 
 
-
-
 import os, sys
 import xml.etree.ElementTree as etree 
 import urllib.request
@@ -142,9 +140,13 @@ def srch_pynr(srch,node):
 def retrieve(place,url,file):
 	status = "false"
 	os.chdir(place)
-	usock = urllib.request.urlopen(url)
-	data = usock.read()
-	usock.close()
+	try:
+		usock = urllib.request.urlopen(url)
+		data = usock.read()
+		usock.close()
+	except:
+		print(file + " could not retrivied from mirror")
+		
 	fp = open(file, 'wb')
 	fp.write(data)
 	fp.close()
@@ -193,6 +195,8 @@ def conflict(source):
 				package = conf.text
 				if package_check(package) == "false":
 					remove(package)
+				else:
+					print(package + " is not installed")
 		else:
 			sys.exit("\nSuprapackage coulnd't installed.\n")
 	else:
@@ -238,51 +242,57 @@ def install(source):
 		action_type = step.attrib["type"]
 		print(str(counter)+ " of " + str(steps) + " is executing")
 		#Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
-		if action_type == "1":
-			pac_action = step.attrib["action"]
-			package = step.text
-			pacman(package,pac_action)
-		elif action_type == "2":
-			mdfy_type = step[0].attrib["type"]
-			source = step[0].attrib["source"]
-			indicator = step[0].attrib["indicator"]
-			search = step[0].attrib["search"]
-			action = convert(step[0].text)
-			place = step[0].attrib["place"]
-			modify(source,search,indicator,action,place,mdfy_type)
-		elif action_type == "3":
-			command = step.text
-			execute(command)
-		elif action_type == "4":
-			question = step[0].text
-			answer = input(question)
-			for i in step:
-				ans_action = i.text
-				position = ans_action.find('@')
-				step_type = i.attrib["step"]
-				if int(i.attrib["step"]) > 0 and position < 0:
-					if int(i.attrib["step"]) == 1:
-						pac_action = step.attrib["action"]
-						package = step.text
-						pacman(package,pac_action)
-					elif int(i.attrib["step"]) == 2:
-						mdfy_type = i.attrib["type"]
-						source = i.attrib["source"]
-						indicator = i.attrib["indicator"]
-						search = i.attrib["search"]
-						ans_action = i.text
-						place = i.attrib["place"]
-						modify(source,search,indicator,action,place,"remove")
-					elif int(i.attrib["step"]) == 3:
-						command = i.text
-						execute(command)
+		#Hata kontrolü kısmı başlangıcı
+		try:
+			if action_type == "1":
+				pac_action = step.attrib["action"]
+				package = step.text
+				pacman(package,pac_action)
+			elif action_type == "2":
+				mdfy_type = step[0].attrib["type"]
+				source = step[0].attrib["source"]
+				indicator = step[0].attrib["indicator"]
+				search = step[0].attrib["search"]
+				action = convert(step[0].text)
+				place = step[0].attrib["place"]
+				modify(source,search,indicator,action,place,mdfy_type)
+			elif action_type == "3":
+				command = step.text
+				execute(command)
+			elif action_type == "4":
+				question = step[0].text
+				answer = input(question)
+				for i in step:
+					ans_action = i.text
+					position = ans_action.find('@')
+					step_type = i.attrib["step"]
+					if int(i.attrib["step"]) > 0:
+						if int(i.attrib["step"]) == 1:
+							pac_action = step.attrib["action"]
+							package = step.text
+							if position > 0:
+								package = package[:position] + answer + package[position+7:]
+							pacman(package,pac_action)
+						elif int(i.attrib["step"]) == 2:
+							mdfy_type = i.attrib["type"]
+							source = i.attrib["source"]
+							indicator = i.attrib["indicator"]
+							search = i.attrib["search"]
+							ans_action = i.text
+							if position > 0:
+								ans_action = ans_action[:position] + answer + ans_action[position+7:]
+							place = i.attrib["place"]
+							modify(source,search,indicator,ans_action,place,mdfy_type)
+						elif int(i.attrib["step"]) == 3:
+							command = i.text
+							if position > 0:
+								command = ans_action[:position] + answer + ans_action[position+7:]
+							execute(command)
 												
-					print(i.attrib["step"])
-				if position > 0:
-					command = ans_action[:position] + answer + ans_action[position+7:]
-					print(command)
-					execute(command)
-		counter = counter + 1
+						
+			counter = counter + 1
+		except:
+			print("Error occureed in step of " + step)
 
 def remove(source):
 	if package_check(source) == "true":
@@ -360,9 +370,9 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc):
 					line = line[:position].replace(action,rplc).strip() + line[position:]
 				elif place == "next":
 					line = line[:position] + line[position:].replace(action,rplc).strip()
-			elif place == "after" or place == "before":
-				if action in line:
-					line = " "
+				elif place == "after" or place == "before":
+					if action in line:
+						line = ""
 			fout.write(line.encode('utf8'))
 			counter = counter + 1
 		os.rename(fout.name, tar_file)
@@ -437,11 +447,8 @@ def main():
 		for i in raw_rqst:
 			rqst = i.lower()
 			#rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir 
-			if srch_pynr(rqst,'Peynir/Name') == "true": #Burada yerel depoda arama yapması gerek.
-				remove(rqst)
-			else:
-				print('error: '+ rqst +' no such a suprapackage')
-		
+			remove(rqst)
+					
 if __name__ == "__main__":
     main()
 		
