@@ -155,6 +155,7 @@ def retrieve(place,url,file):
 		usock.close()
 	except:
 		print(file + " could not retrivied from mirror")
+		sys.exit(1)
 		
 	fp = open(file, 'wb')
 	fp.write(data)
@@ -174,6 +175,7 @@ def sync_repo():
 			print("Database successfully updated.")
 		except:
 			print("Database couldn't updated.")
+			sys.exit(1)
 	else:
 		print("Database already updated.")
 		
@@ -302,13 +304,19 @@ def install(source):
 			counter = counter + 1
 		except:
 			print("Error occureed in step of " + step)
+			sys.exit(1)
 
 def remove(source):
 	if package_check(source) == "true":
 		sys.exit("\nThis suprapackage is not installed.\n")
 	print(source + " suprapackage is removing")
-	tree = etree.parse(sprpckg_dir+source+".xml")
-	os.remove(sprpckg_dir+source+".xml")
+	try:
+		tree = etree.parse(sprpckg_dir+source+".xml")
+		os.remove(sprpckg_dir+source+".xml")
+	except:
+		print("Local package couldn't found")
+		sys.exit(1)
+		
 	root = tree.getroot()
 	steps = len(root[3])
 	counter = 1
