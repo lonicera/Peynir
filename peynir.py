@@ -442,7 +442,7 @@ def main():
 	elif sys.argv[1] == "-Su" and len(sys.argv) == 2 :
 		upgrade()
 	elif len(sys.argv) == 2 :
-		sys.stderr.write('Usage: peynir [command] [options] \n')
+		sys.stderr.write('Usage: peynir [command] [options] \n Commands: \n -S Install suprapackage \n -R Remove suprapackage \n -Sy Update repository \n -Su Upgrade the system \n -Ss Search suprapackege in repository \n -h Display the help screen')
 		sys.exit(1)
 	
     
@@ -473,6 +473,9 @@ def main():
 			rqst = i.lower()
 			print("Results for " + rqst)
 			srch_pynr(rqst,'Peynir/Name','find')
+	elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
+		sys.stderr.write('Usage: peynir [command] [options] \n Commands: \n -S Install suprapackage \n -R Remove suprapackage \n -Sy Update repository \n -Su Upgrade the system \n -Ss Search suprapackege in repository \n -h Display the help screen')
+		sys.exit(1)
 			
 					
 if __name__ == "__main__":
