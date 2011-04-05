@@ -234,6 +234,8 @@ def dependencies(source):
 					install(package) #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
 				else:
 					print(package + " is already installed")
+		else:
+			sys.exit("Dependencies coulnd't installed so install process couldn't continue.\n")
 	else:
 		print("There is a no dependencies")
 
