@@ -140,7 +140,7 @@ def srch_pynr(srch,node,action):
 	for comp in range(len(repo_search)):
 		if action == "find":
 			if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
-				print("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
+				return ("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
 		if repo_search[comp].text == srch and action == "absolute":
 			result = "true"
 			return result
