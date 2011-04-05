@@ -140,7 +140,7 @@ def srch_pynr(srch,node,action):
 	for comp in range(len(repo_search)):
 		if action == "find":
 			if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
-				return ("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
+				print("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
 		if repo_search[comp].text == srch and action == "absolute":
 			result = "true"
 			return result
@@ -464,7 +464,7 @@ def main():
 		for i in raw_rqst:
 			rqst = i.lower()
 			print("Results for " + rqst)
-			print(srch_pynr(rqst,'Peynir/Name','find'))
+			srch_pynr(rqst,'Peynir/Name','find')
 			
 					
 if __name__ == "__main__":
