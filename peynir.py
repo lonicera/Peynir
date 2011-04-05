@@ -25,6 +25,7 @@
 import os, sys
 import xml.etree.ElementTree as etree 
 import urllib.request
+import difflib
 from tempfile import NamedTemporaryFile
 
 repo = '/var/cache/peynir/peynir.xml'
@@ -33,6 +34,11 @@ sprpckg_dir = '/var/cache/peynir/packages/'
 mirror = 'http://www.alansistem.com/peynir/'
 log_dir = '/var/log/peynir/'
 db_file = 'peynir.xml'
+
+def similarity(first,second):
+	seq=difflib.SequenceMatcher(a=first.lower(), b=second.lower())
+	return round(seq.ratio(),1)
+
 
 def convert_library(find):
 	result = ""
@@ -126,13 +132,16 @@ def upcontrol(srch,place):
 				return root.text
 
 
-def srch_pynr(srch,node):
+def srch_pynr(srch,node,action):
 	repo_tree = etree.parse(repo)
 	repo_root = repo_tree.getroot()
 	repo_search = repo_root[1].findall(node)
 	result = "false"
 	for comp in range(len(repo_search)):
-		if repo_search[comp].text == srch:
+		if action == "find":
+			if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
+				print("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
+		if repo_search[comp].text == srch and action == "absolute":
 			result = "true"
 			return result
 			break 
@@ -436,7 +445,7 @@ def main():
 		for i in raw_rqst:
 			rqst = i.lower()
 			#rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir 
-			if srch_pynr(rqst,'Peynir/Name') == "true":
+			if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
 				install(rqst)
 			else:
 				print('error: '+ rqst +' no such a suprapackage')
@@ -448,6 +457,15 @@ def main():
 			rqst = i.lower()
 			#rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir 
 			remove(rqst)
+	elif sys.argv[1] == "-Ss":
+		argv_len = len(sys.argv)
+		raw_rqst = sys.argv[2:argv_len]
+		#print(raw_rqst)
+		for i in raw_rqst:
+			rqst = i.lower()
+			print("Results for " + rqst)
+			print(srch_pynr(rqst,'Peynir/Name','find'))
+			
 					
 if __name__ == "__main__":
     main()
