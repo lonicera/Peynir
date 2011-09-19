@@ -214,7 +214,7 @@ def conflict(source, option):
     else:
         print("There is a no conflict")
 
-def dependencies(source):
+def dependencies(source, option):
     print("Resolving dependencies..")
     if option == "retrieve": #sistemin hızlanması için
         retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
