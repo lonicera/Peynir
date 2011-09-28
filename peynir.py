@@ -36,7 +36,7 @@ log_dir = '/var/log/peynir/'
 db_file = 'peynir.xml'
 
 def similarity(first,second):
-    	seq=difflib.SequenceMatcher(a=first.lower(), b=second.lower())
+	seq=difflib.SequenceMatcher(a=first.lower(), b=second.lower())
 	return round(seq.ratio(),1)
 
 
