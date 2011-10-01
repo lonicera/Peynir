@@ -205,7 +205,7 @@ def conflict(source):
             for conf in root[1]:
                 package = conf.text
                 if package_check(package) == "false":
-                    remove(package)
+                    remove(package,"")
                 else:
                     print(package + " is not installed")
         else:
@@ -259,7 +259,7 @@ def install(source, place):
     counter = 1
     for step in root[3]:
         action_type = step.attrib["type"]
-        print(str(counter)+ " of " + str(steps) + " is executing")
+        print("Step " + str(counter)+ " of " + str(steps) + " is executing")
         #Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
         #Hata kontrolü kısmı başlangıcı
         try:
@@ -314,7 +314,7 @@ def install(source, place):
             print("Error occureed in step of " + step)
             sys.exit(1)
 
-def remove(source):
+def remove(source, rmv_type):
     if package_check(source) == "true":
         sys.exit("\nThis suprapackage is not installed.\n")
     print(source + " suprapackage is removing")
@@ -330,7 +330,7 @@ def remove(source):
     counter = 1
     for step in root[3]:
         action_type = step.attrib["type"]
-        print(str(counter)+ " of " + str(steps) + " is executing")
+        print("Step " + str(counter)+ " of " + str(steps) + " is executing")
         try:
             if action_type == "1":
                 package = step.text
@@ -418,7 +418,7 @@ def upgrade():
             print(fname[:-4]+" Güncelle")
             counter = counter + 1
     for up in up_list[0:]:
-        remove(up)
+        remove(up,"")
         install(up,"")
 
 def pacman(package,action):
@@ -447,14 +447,14 @@ def main():
         sys.exit("You must be root to run this application, please use sudo and try again. \n")
 
     if len(sys.argv) == 1:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n      -U Install local suprapackage \n        -R Remove suprapackage \n       -Sy Update repository \n        -Su Upgrade the system \n       -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
     elif sys.argv[1] == "-Sy" and len(sys.argv) == 2 :
         sync_repo()
     elif sys.argv[1] == "-Su" and len(sys.argv) == 2 :
         upgrade()
     elif len(sys.argv) == 2 :
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n      -U Install local suprapackage \n        -R Remove suprapackage \n       -Sy Update repository \n        -Su Upgrade the system \n       -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
 
 
@@ -476,7 +476,15 @@ def main():
         for i in raw_rqst:
             rqst = i.lower()
             #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-            remove(rqst)
+            remove(rqst,"")
+    elif sys.argv[1] == "-Rs":
+        argv_len = len(sys.argv)
+        raw_rqst = sys.argv[2:argv_len]
+        #print(raw_rqst)
+        for i in raw_rqst:
+            rqst = i.lower()
+            #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
+            remove(rqst,"complete")
     elif sys.argv[1] == "-Ss":
         argv_len = len(sys.argv)
         raw_rqst = sys.argv[2:argv_len]
@@ -493,7 +501,7 @@ def main():
 
 
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n      -U Install local suprapackage \n        -R Remove suprapackage \n       -Sy Update repository \n        -Su Upgrade the system \n       -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
 
 
