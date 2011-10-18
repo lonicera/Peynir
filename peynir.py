@@ -243,10 +243,8 @@ def dependencies(source,action):
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
-                   if package_check(package) == "true":
-                       remove(package,"")
-                   else:
-                       print(package + " is not installed")
+                   remove(package,"ddd")
+                   
            else:
                sys.exit("Dependencies coulnd't installed so install process couldn't continue.\n")
        else:
@@ -430,9 +428,9 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc):
                    line = line[:position].replace(action,rplc).strip() + line[position:]
                elif place == "next":
                    line = line[:position] + line[position:].replace(action,rplc).strip()
-               elif place == "after" or place == "before":
-                   if action in line:
-                       line = ""
+           if place == "after" or place == "before":
+               if action in line:
+                   line = ""
            fout.write(line.encode('utf8'))
            counter = counter + 1
        os.rename(fout.name, tar_file)
@@ -497,7 +495,8 @@ def main():
            rqst = i.lower()
            #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
            if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
-               db_file_check(install(rqst,""))
+               db_file_check()
+               install(rqst,"")
            else:
                print('error: '+ rqst +' no such a suprapackage')
     elif sys.argv[1] == "-R":
@@ -507,7 +506,8 @@ def main():
        for i in raw_rqst:
            rqst = i.lower()
            #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-           db_file_check(remove(rqst,""))
+           db_file_check()
+           remove(rqst,"")
     elif sys.argv[1] == "-Rs":
        argv_len = len(sys.argv)
        raw_rqst = sys.argv[2:argv_len]
@@ -515,7 +515,8 @@ def main():
        for i in raw_rqst:
            rqst = i.lower()
            #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-           db_file_check(remove(rqst,"complete"))
+           db_file_check()
+           remove(rqst,"complete")
     elif sys.argv[1] == "-Ss":
        argv_len = len(sys.argv)
        raw_rqst = sys.argv[2:argv_len]
@@ -523,12 +524,14 @@ def main():
        for i in raw_rqst:
            rqst = i.lower()
            print("Results for " + rqst)
-           db_file_check(srch_pynr(rqst,'Peynir/Name','find'))
+           db_file_check()
+           srch_pynr(rqst,'Peynir/Name','find')
     elif sys.argv[1] == "-U":
        argv_len = len(sys.argv)
        raw_rqst = sys.argv[2:argv_len]
        print(sys.argv[2])
-       db_file_check(install(sys.argv[2],"local"))
+       db_file_check()
+       install(sys.argv[2],"local")
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
        sys.exit(1)
