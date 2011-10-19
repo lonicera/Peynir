@@ -268,7 +268,7 @@ def dependencies(source,action):
 def install(source, place):
     if package_check(source) == "false":
        sys.exit("\nThis suprapackage already installed.\n")
-    print(source + " suprapackage is installing")
+    
     if place == "local":
        tree = etree.parse(os.getcwd()+"/"+source)
        shutil.copyfile(source, sprpckg_dir+"/"+source)
@@ -282,6 +282,7 @@ def install(source, place):
     root = tree.getroot()
     steps = len(root[3])
     print(str(steps) + " step(s) will executed.")
+    print(source + " suprapackage is installing")
     counter = 1
     for step in root[3]:
        action_type = step.attrib["type"]
@@ -384,6 +385,7 @@ def modify(tar_file,srch,indicator,action,place,mdfy_type):
        modify_rmv(tar_file,srch,indicator,action,place," ")
 
 def modify_add(tar_file,srch,indicator,action,place):
+    print("==> adding" + action + " to " + tar_file)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
@@ -413,6 +415,7 @@ def modify_add(tar_file,srch,indicator,action,place):
        os.system("chown "+  old_owner.strip() + " " + tar_file)
 
 def modify_rmv(tar_file,srch,indicator,action,place,rplc):
+    print("==> removing" + action + " from " + tar_file)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
@@ -451,6 +454,7 @@ def upgrade():
        install(up,"")
 
 def pacman(package,action):
+    print("==> " + action + "ing " + package + "via pacman") #remove, removing eksikliğini düzelt
     import subprocess
     if action == "install":
        retri = "pacman -S --noconfirm "+ package
@@ -459,12 +463,13 @@ def pacman(package,action):
     subprocess.Popen(retri, shell=True).wait()
 
 def execute(command):
+    print("==> executing" + command + " in the shell")
     import subprocess
     retri = command
     subprocess.Popen(retri, shell=True).wait()
 
 
-def rmv(package):
+def rmv(package): #Bu fonksiyon sanırım gereksiz!!!
     import subprocess
     retri = "pacman -R --noconfirm "+ package
     subprocess.Popen(retri, shell=True)
@@ -531,14 +536,20 @@ def main():
        raw_rqst = sys.argv[2:argv_len]
        print(sys.argv[2])
        db_file_check()
-       install(sys.argv[2],"local")
+       package = sys.argv[2]
+       if package[-3:] != "xml":
+           package = package+".xml"
+               	   
+       if package_check(package[:-4]) == "true":
+	       install(package,"local")
+       else:
+           print("This suprapackage already installed in your system.")
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
        sys.exit(1)
     else:
         print("Invalid argument: " + sys.argv[1])
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
