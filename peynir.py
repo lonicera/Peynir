@@ -49,7 +49,6 @@ def similarity(first,second):
     seq=difflib.SequenceMatcher(a=first.lower(), b=second.lower())
     return round(seq.ratio(),1)
 
-
 def convert_library(find):
     result = ""
     if find == "@anc":
@@ -141,7 +140,21 @@ def upcontrol(srch,place):
            if root.tag == "Version":
                return root.text
 
-
+#Bu kısım düzenlenerek paketle ilgili herhangi bir bilgi de çekilebilir.
+def get_description(package):
+    repo_tree = etree.parse(repo)
+    repo_root = repo_tree.getroot()
+    repo_search = repo_root[1].findall('Peynir/Name')
+    repo_search1 = repo_root[1].findall('Peynir/Summary')
+    for comp in range(len(repo_search)):
+        if repo_search[comp].text == package:
+            sayi = comp
+            break
+    try:
+        return repo_search1[(sayi*2)+1].text
+    except:
+        return "deneme"
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -178,8 +191,6 @@ def retrieve(place,url,file):
     return status
 
 def sync_repo():
-    #print(uptodate(db_dir+db_file,"local"))
-    #print(uptodate(mirror+db_file,"web"))
     if not os.path.isfile(db_dir+db_file) or uptodate(db_dir+db_file,"local") != uptodate(mirror+db_file,"web"):
        try:
            retrieve(db_dir,mirror+db_file,db_dir+db_file)
@@ -210,7 +221,10 @@ def conflict(source):
        print(str(conflictcount) + " conflicts have found.")
        print("Following suprapackage(s) will remove. " )
        for conf in root[1]:
-           print(conf.text)
+           try:
+               print(conf.text + " ==> " + get_description(conf.text))
+           except:
+               print(conf.text + " ==> There is no description for this package")
        answer = input("Are you want to remove these packages (Y/N): ")
        if answer == "Y" or answer == "y":
            for conf in root[1]:
@@ -238,19 +252,24 @@ def dependencies(source,action):
        if action == "remove":
            print("Following suprapackage(s) will remove. " )
            for dep in root[2]:
-               print(dep.text)
+               try:
+                   print(dep.text + " ==> " + get_description(dep.text))
+               except:
+                   print(dep.text + " ==> There is no description for this package")
            answer = input("Are you want to remove these packages (Y/N): ")
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
                    remove(package,"ddd")
-                   
            else:
-               sys.exit("Dependencies coulnd't installed so install process couldn't continue.\n")
+               sys.exit("Dependencies coulnd't removed so remove process couldn't continue.\n")
        else:
            print("Following suprapackage(s) will install. " )
            for dep in root[2]:
-               print(dep.text)
+               try:
+                   print(dep.text + " ==> " + get_description(dep.text))
+               except:
+                   print(dep.text + " ==> There is no description for this package")
            answer = input("Are you want to install these packages (Y/N): ")
            if answer == "Y" or answer == "y":
                for dep in root[2]:
@@ -334,8 +353,6 @@ def install(source, place):
                            if position > 0:
                                command = ans_action[:position] + answer + ans_action[position+7:]
                            execute(command)
-
-
            counter = counter + 1
        except:
            print("Error occureed in step of " + step)
@@ -353,7 +370,6 @@ def remove(source, rmv_type):
     except:
        print("Local package couldn't found")
        sys.exit(1)
-
     root = tree.getroot()
     steps = len(root[3])
     counter = 1
@@ -363,7 +379,7 @@ def remove(source, rmv_type):
        try:
            if action_type == "1":
                package = step.text
-               rmv(package)
+               pacman(package,"remove")
            elif action_type == "2":
                mdfy_type = step[0].attrib["type"]
                source = step[0].attrib["source"]
@@ -377,7 +393,6 @@ def remove(source, rmv_type):
            print("Error")
            sys.exit(1)
      
-
 def modify(tar_file,srch,indicator,action,place,mdfy_type):
     if mdfy_type == "add":
        modify_add(tar_file,srch,indicator,action,place)
@@ -468,12 +483,6 @@ def execute(command):
     retri = command
     subprocess.Popen(retri, shell=True).wait()
 
-
-def rmv(package): #Bu fonksiyon sanırım gereksiz!!!
-    import subprocess
-    retri = "pacman -R --noconfirm "+ package
-    subprocess.Popen(retri, shell=True)
-
 ### Ana bölüm
 def main():
     #log_create("gnome",1,"oldu")
@@ -490,8 +499,6 @@ def main():
     elif len(sys.argv) == 2 :
        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
        sys.exit(1)
-
-
     if sys.argv[1] == "-S":
        argv_len = len(sys.argv)
        raw_rqst = sys.argv[2:argv_len]
@@ -539,7 +546,7 @@ def main():
        package = sys.argv[2]
        if package[-3:] != "xml":
            package = package+".xml"
-               	   
+           		   
        if package_check(package[:-4]) == "true":
 	       install(package,"local")
        else:
@@ -553,4 +560,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
