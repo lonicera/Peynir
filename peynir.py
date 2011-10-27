@@ -112,7 +112,11 @@ def log_create(package,step_no,status):
 #Bu fonksiyon kodları kısaltmak üzere tasarladığım bir deneme; bir xml dosyasının belirli bölgesini seçmek için kullanılacak
 def uptodate(xml_source,type_file):
     if type_file == "web":
-       tree = etree.parse(urllib.request.urlopen(xml_source))
+       try:
+           tree = etree.parse(urllib.request.urlopen(xml_source))
+       except:
+           print("Database couldn't updated.")
+           sys.exit(1)
     else:
        tree = etree.parse(xml_source)
     root = tree.getroot()
@@ -153,7 +157,7 @@ def get_description(package):
     try:
         return repo_search1[(sayi*2)+1].text
     except:
-        return "deneme"
+        return "There is no description for this package"
 			
 def srch_pynr(srch,node,action):
     db_file_check()
@@ -195,11 +199,13 @@ def sync_repo():
        try:
            retrieve(db_dir,mirror+db_file,db_dir+db_file)
            print("Database successfully updated.")
+           
        except:
            print("Database couldn't updated.")
            sys.exit(1)
     else:
        print("Database already updated.")
+       sys.exit(1)
 
 def package_check(package):
     check_fail = "true"
@@ -494,6 +500,7 @@ def main():
        sys.exit(1)
     elif sys.argv[1] == "-Sy" and len(sys.argv) == 2 :
        sync_repo()
+       sys.exit(1)
     elif sys.argv[1] == "-Su" and len(sys.argv) == 2 :
        upgrade()
     elif len(sys.argv) == 2 :
