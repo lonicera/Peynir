@@ -28,8 +28,6 @@ import urllib.request
 import difflib
 from tempfile import NamedTemporaryFile
 
-user_agent = "Mozilla/5.0 (X11; Linux i686; rv:8.0) Gecko/20100101 Firefox/8.0"
-headers = { 'User-Agent' : user_agent }
 repo = '/var/cache/peynir/peynir.xml'
 db_dir = '/var/cache/peynir/'
 sprpckg_dir = '/var/cache/peynir/packages/'
@@ -115,7 +113,7 @@ def log_create(package,step_no,status):
 def uptodate(xml_source,type_file):
     if type_file == "web":
        try:
-           tree = etree.parse(urllib.request.urlopen(xml_source,user_agent))
+           tree = etree.parse(urllib.request.urlopen(xml_source))
        except:
            print("Database couldn't updated.")
            sys.exit(1)
