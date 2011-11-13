@@ -28,10 +28,12 @@ import urllib.request
 import difflib
 from tempfile import NamedTemporaryFile
 
+user_agent = "Mozilla/5.0 (X11; Linux i686; rv:8.0) Gecko/20100101 Firefox/8.0"
+headers = { 'User-Agent' : user_agent }
 repo = '/var/cache/peynir/peynir.xml'
 db_dir = '/var/cache/peynir/'
 sprpckg_dir = '/var/cache/peynir/packages/'
-mirror = 'http://www.alansistem.com/peynir/'
+mirror = 'http://lonicera.byethost7.com/'
 log_dir = '/var/log/peynir/'
 db_file = 'peynir.xml'
 
@@ -113,12 +115,17 @@ def log_create(package,step_no,status):
 def uptodate(xml_source,type_file):
     if type_file == "web":
        try:
-           tree = etree.parse(urllib.request.urlopen(xml_source))
+           tree = etree.parse(urllib.request.urlopen(xml_source,user_agent))
        except:
            print("Database couldn't updated.")
            sys.exit(1)
     else:
-       tree = etree.parse(xml_source)
+        try:
+            tree = etree.parse(xml_source)
+        except:
+            print("There is a problem with xml file")
+            sys.exit(1)
+            
     root = tree.getroot()
     find_node = root[0].findall('Last_update')
     up_date = find_node[0].text
@@ -178,12 +185,14 @@ def retrieve(place,url,file):
     status = "false"
     os.chdir(place)
     try:
-       usock = urllib.request.urlopen(url)
-       data = usock.read()
-       usock.close()
+        req=urllib.request.Request(url)
+        req.add_header("User-Agent","Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/525.13 (KHTML,     like Gecko) Chrome/0.2.149.29 Safari/525.13")
+        usock = urllib.request.urlopen(req)
+        data = usock.read()
+        usock.close() 
     except:
-       print(file + " could not retrivied from mirror")
-       sys.exit(1)
+        print(file + " could not retrivied from mirror")
+        sys.exit(1)
 
     fp = open(file, 'wb')
     fp.write(data)
@@ -266,6 +275,7 @@ def dependencies(source,action):
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
+                   print(package + " suprapackage is removing")
                    remove(package,"ddd")
            else:
                sys.exit("Dependencies coulnd't removed so remove process couldn't continue.\n")
@@ -281,6 +291,7 @@ def dependencies(source,action):
                for dep in root[2]:
                    package = dep.text
                    if package_check(package) == "true":
+                       print(package + " suprapackage is installing")
                        install(package,"") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                    else:
                        print(package + " is already installed")
@@ -369,7 +380,7 @@ def remove(source, rmv_type):
        sys.exit("\nThis suprapackage is not installed.\n")
     if rmv_type == "complete":
        dependencies(source,"remove")
-    print(source + " suprapackage is removing")
+    #print(source + " suprapackage is removing")
     try:
        tree = etree.parse(sprpckg_dir+source+".xml")
        os.remove(sprpckg_dir+source+".xml")
@@ -430,7 +441,8 @@ def modify_add(tar_file,srch,indicator,action,place):
                    line = action + "\n" + line
            fout.write(line.encode('utf8'))
            counter = counter + 1
-       os.rename(fout.name, tar_file)
+       shutil.move(fout.name, tar_file)
+       #os.rename(fout.name, tar_file)
        #Alttaki satırları fonksiyona dönüştürver gari
        os.system("chmod " + old_prop.strip() + " " + tar_file)
        os.system("chown "+  old_owner.strip() + " " + tar_file)
@@ -494,76 +506,74 @@ def main():
     #log_create("gnome",1,"oldu")
     if not os.geteuid()==0:
        sys.exit("You must be root to run this application, please use sudo and try again. \n")
-
+    
     if len(sys.argv) == 1:
-       sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
-       sys.exit(1)
-    elif sys.argv[1] == "-Sy" and len(sys.argv) == 2 :
-       sync_repo()
-       sys.exit(1)
-    elif sys.argv[1] == "-Su" and len(sys.argv) == 2 :
-       upgrade()
-    elif len(sys.argv) == 2 :
-       sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
-       sys.exit(1)
-    if sys.argv[1] == "-S":
-       argv_len = len(sys.argv)
-       raw_rqst = sys.argv[2:argv_len]
-       #print(raw_rqst) #Burası daha sonra kaldırılacak.
-       for i in raw_rqst:
-           rqst = i.lower()
-           #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-           if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
-               db_file_check()
-               install(rqst,"")
-           else:
-               print('error: '+ rqst +' no such a suprapackage')
-    elif sys.argv[1] == "-R":
-       argv_len = len(sys.argv)
-       raw_rqst = sys.argv[2:argv_len]
-       #print(raw_rqst)
-       for i in raw_rqst:
-           rqst = i.lower()
-           #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-           db_file_check()
-           remove(rqst,"")
-    elif sys.argv[1] == "-Rs":
-       argv_len = len(sys.argv)
-       raw_rqst = sys.argv[2:argv_len]
-       #print(raw_rqst)
-       for i in raw_rqst:
-           rqst = i.lower()
-           #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
-           db_file_check()
-           remove(rqst,"complete")
-    elif sys.argv[1] == "-Ss":
-       argv_len = len(sys.argv)
-       raw_rqst = sys.argv[2:argv_len]
-       #print(raw_rqst)
-       for i in raw_rqst:
-           rqst = i.lower()
-           print("Results for " + rqst)
-           db_file_check()
-           srch_pynr(rqst,'Peynir/Name','find')
-    elif sys.argv[1] == "-U":
-       argv_len = len(sys.argv)
-       raw_rqst = sys.argv[2:argv_len]
-       print(sys.argv[2])
-       db_file_check()
-       package = sys.argv[2]
-       if package[-3:] != "xml":
-           package = package+".xml"
-           		   
-       if package_check(package[:-4]) == "true":
-	       install(package,"local")
-       else:
-           print("This suprapackage already installed in your system.")
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.exit(1)
+    elif sys.argv[1] == "-Sy":
+        sync_repo()
+    elif sys.argv[1] == "-Su":
+        upgrade()
+    elif len(sys.argv) == 1:
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.exit(1)
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
        sys.exit(1)
+    elif len(sys.argv) > 2:
+        if sys.argv[1] == "-S":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            for i in raw_rqst:
+                rqst = i.lower()
+                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
+                if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
+                    db_file_check()
+                    install(rqst,"")
+                else:
+                    print('error: '+ rqst +' no such a suprapackage')
+        elif sys.argv[1] == "-R":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            for i in raw_rqst:
+                rqst = i.lower()
+                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
+                db_file_check()
+                remove(rqst,"")
+        elif sys.argv[1] == "-Rs":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            for i in raw_rqst:
+                rqst = i.lower()
+                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
+                db_file_check()
+                remove(rqst,"complete")
+        elif sys.argv[1] == "-Ss":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            for i in raw_rqst:
+                rqst = i.lower()
+                print("Results for " + rqst)
+                db_file_check()
+                srch_pynr(rqst,'Peynir/Name','find')
+        elif sys.argv[1] == "-U":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            print(sys.argv[2])
+            db_file_check()
+            package = sys.argv[2]
+            if package[-3:] != "xml":
+                package = package+".xml"
+            if package_check(package[:-4]) == "true":
+                install(package,"local")
+            else:
+                print("This suprapackage already installed in your system.")
+        else:
+            print("Invalid argument: " + sys.argv[1])
+            sys.exit(1)
     else:
-        print("Invalid argument: " + sys.argv[1])
-        sys.exit(1)
-
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.exit(1) 
+			 
 if __name__ == "__main__":
     main()
