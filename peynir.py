@@ -21,6 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
+#       Version:0.0.3
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -35,6 +36,12 @@ mirror = 'http://lonicera.byethost7.com/'
 log_dir = '/var/log/peynir/'
 db_file = 'peynir.xml'
 
+def text_formatting(source,level):
+    tab_space = "   "
+    for i in range(level):
+        source = tab_space + source
+    print(source)
+    
 def db_file_check():
     if not os.path.isfile(db_dir+db_file):
         try:
@@ -247,7 +254,7 @@ def conflict(source):
                else:
                    print(package + " is not installed")
        else:
-           sys.exit("\nSuprapackage coulnd't installed.\n")
+           sys.exit("Suprapackage coulnd't installed.")
     else:
        print("There is a no conflict")
 
@@ -276,7 +283,7 @@ def dependencies(source,action):
                    print(package + " suprapackage is removing")
                    remove(package,"ddd")
            else:
-               sys.exit("Dependencies coulnd't removed so remove process couldn't continue.\n")
+               sys.exit("Dependencies coulnd't removed so remove process couldn't continue.")
        else:
            print("Following suprapackage(s) will install. " )
            for dep in root[2]:
@@ -295,13 +302,13 @@ def dependencies(source,action):
                        print(package + " is already installed")
            else:
                os.remove(sprpckg_dir+source+".xml")
-               sys.exit("Dependencies coulnd't installed so install process couldn't continue.\n")
+               sys.exit("Dependencies coulnd't installed so install process couldn't continue.")
     else:
        print("There is a no dependencies")
 
 def install(source, place):
     if package_check(source) == "false":
-       sys.exit("\nThis suprapackage already installed.\n")
+       sys.exit("This suprapackage already installed.")
     
     if place == "local":
        tree = etree.parse(os.getcwd()+"/"+source)
@@ -320,7 +327,7 @@ def install(source, place):
     counter = 1
     for step in root[3]:
        action_type = step.attrib["type"]
-       print("Step " + str(counter)+ " of " + str(steps) + " is executing")
+       print("==> Step " + str(counter)+ " of " + str(steps) + " is executing")
        #Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
        #Hata kontrolü kısmı başlangıcı
        try:
@@ -341,7 +348,9 @@ def install(source, place):
                execute(command)
            elif action_type == "4":
                question = step[0].text
+               text_formatting("-> " + str(len(step)-1) + " substep(s) will execute for this step",1)
                answer = input(question)
+               modify_add(sprpckg_dir+source+".xml",question,"step","answer='"+answer+"' ","previous")
                for i in step:
                    ans_action = i.text
                    position = ans_action.find('@')
@@ -375,10 +384,10 @@ def install(source, place):
 
 def remove(source, rmv_type):
     if package_check(source) == "true":
-       sys.exit("\nThis suprapackage is not installed.\n")
+       sys.exit("This suprapackage is not installed.")
     if rmv_type == "complete":
        dependencies(source,"remove")
-    #print(source + " suprapackage is removing")
+    print(source + " suprapackage is removing")
     try:
        tree = etree.parse(sprpckg_dir+source+".xml")
        os.remove(sprpckg_dir+source+".xml")
@@ -388,21 +397,105 @@ def remove(source, rmv_type):
     root = tree.getroot()
     steps = len(root[3])
     counter = 1
-    for step in root[3]:
+    for step in reversed(root[3]):
        action_type = step.attrib["type"]
-       print("Step " + str(counter)+ " of " + str(steps) + " is executing")
+       try:
+           remove_tag = step.attrib["remove_tag"]
+       except KeyError:
+           remove_tag = " "
+       print("==> Step " + str(counter)+ " of " + str(steps) + " is executing")
        try:
            if action_type == "1":
-               package = step.text
-               pacman(package,"remove")
+               if remove_tag == "skip":
+                   text_formatting("-> Skipping this step for remove action",1)
+               else:
+                   package = step.text
+                   pacman(package,"remove")
            elif action_type == "2":
-               mdfy_type = step[0].attrib["type"]
-               source = step[0].attrib["source"]
-               indicator = step[0].attrib["indicator"]
-               search = step[0].attrib["search"]
-               action = convert(step[0].text)
-               place = step[0].attrib["place"]
-               modify(source,search,indicator,action,place,"remove")
+               if remove_tag == "skip":
+                   text_formatting("-> Skipping this step for remove action",1)
+               else:
+                   mdfy_type = step[0].attrib["type"]
+                   if mdfy_type == "add":
+                       mdfy_type = "remove"
+                   elif mdfy_type == "remove":
+                       mdfy_type == "add"
+                   source = step[0].attrib["source"]
+                   indicator = step[0].attrib["indicator"]
+                   search = step[0].attrib["search"]
+                   action = convert(step[0].text)
+                   place = step[0].attrib["place"]
+                   modify(source,search,indicator,action,place,mdfy_type)
+           elif action_type == "3" and remove_tag != "skip":
+               if remove_tag == "skip":
+                   text_formatting("-> Skipping this step for remove action",1)
+               else:
+                   try:
+                       reverse = step.attrib["reverse"]
+                       execute(reverse)
+                   except:
+                       text_formatting("There is no defined action for this step",1)
+           elif action_type == "4": # Buraya reverse özelliklerini ekle
+               try:
+                   answer= step[0].attrib["answer"]
+                   print(answer)
+                   text_formatting("-> " + str(len(step)-1) + " substep(s) will execute for this step",1)
+                   for i in step:
+                       try:
+                           remove_tag = i.attrib["remove_tag"]
+                       except KeyError:
+                           remove_tag = " "
+                       ans_action = i.text
+                       position = ans_action.find('@')
+                       step_type = i.attrib["step"]
+                       if int(i.attrib["step"]) > 0:
+                           if int(i.attrib["step"]) == 1:
+                               if remove_tag == "skip":
+                                   text_formatting("-> Skipping this step for remove action",1)
+                               else:
+                                   pac_action = step.attrib["action"]
+                                   if pac_action == "remove":
+                                       pac_action = "install"
+                                   elif pac_action == "install":
+                                       pac_action = "remove"
+                                   package = step.text
+                                   if position > 0:
+                                       package = package[:position] + answer + package[position+7:]
+                                       pacman(package,pac_action)
+                           elif int(i.attrib["step"]) == 2:
+                               if remove_tag == "skip":
+                                   text_formatting("-> Skipping this step for remove action",1)
+                               else:
+                                   mdfy_type = i.attrib["type"]
+                                   if mdfy_type == "add":
+                                       mdfy_type = "remove"
+                                   elif mdfy_type == "remove":
+                                       mdfy_type == "add"
+                                   source = i.attrib["source"]
+                                   indicator = i.attrib["indicator"]
+                                   search = i.attrib["search"]
+                                   ans_action = i.text
+                                   if position > 0:
+                                       ans_action = ans_action[:position] + answer + ans_action[position+7:]
+                                   place = i.attrib["place"]
+                                   modify(source,search,indicator,ans_action,place,mdfy_type)
+                           elif int(i.attrib["step"]) == 3:
+                               if remove_tag == "skip":
+                                   text_formatting("-> Skipping this step for remove action",1)
+                               else:
+                                   command = i.text
+                                   if position > 0:
+                                       try:
+                                           reverse = i.attrib["reverse"]
+                                           position = reverse.find('@')
+                                           command = reverse[:position] + answer + reverse[position+7:]
+                                           execute(command)
+                                       except:
+                                           command = ans_action[:position] + answer + ans_action[position+7:]
+                                           execute(command)
+                       
+               except:
+                   text_formatting("There is no defined action for this step",1)
            counter = counter + 1
        except:
            print("Error")
@@ -415,7 +508,7 @@ def modify(tar_file,srch,indicator,action,place,mdfy_type):
        modify_rmv(tar_file,srch,indicator,action,place," ")
 
 def modify_add(tar_file,srch,indicator,action,place):
-    print("==> adding" + action + " to " + tar_file)
+    text_formatting("-> adding" + action + " to " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
@@ -446,7 +539,7 @@ def modify_add(tar_file,srch,indicator,action,place):
        os.system("chown "+  old_owner.strip() + " " + tar_file)
 
 def modify_rmv(tar_file,srch,indicator,action,place,rplc):
-    print("==> removing" + action + " from " + tar_file)
+    text_formatting("-> removing" + action + " from " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
@@ -478,14 +571,14 @@ def upgrade():
     for fname in dirlist:
        if upcontrol(fname[:-4],"local") != upcontrol(fname[:-4],"repo"):
            up_list.append(fname[:-4]);
-           print(fname[:-4]+" Güncelle")
+           print(fname[:-4]+" Guncelle")
            counter = counter + 1
     for up in up_list[0:]:
        remove(up,"")
        install(up,"")
 
 def pacman(package,action):
-    print("==> " + action + "ing " + package + "via pacman") #remove, removing eksikliğini düzelt
+    text_formatting("-> " + action + "ing " + package + " via pacman",1) #remove, removing eksikliğini düzelt
     import subprocess
     if action == "install":
        retri = "pacman -S --noconfirm "+ package
@@ -494,7 +587,7 @@ def pacman(package,action):
     subprocess.Popen(retri, shell=True).wait()
 
 def execute(command):
-    print("==> executing" + command + " in the shell")
+    text_formatting("-> executing " + command + " in the shell",1)
     import subprocess
     retri = command
     subprocess.Popen(retri, shell=True).wait()
@@ -503,7 +596,7 @@ def execute(command):
 def main():
     #log_create("gnome",1,"oldu")
     if not os.geteuid()==0:
-       sys.exit("You must be root to run this application, please use sudo and try again. \n")
+       sys.exit("You must be root to run this application, please use sudo and try again.")
     
     if len(sys.argv) == 1:
         sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
