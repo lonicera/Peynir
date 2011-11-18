@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.0.3
+#       Version:0.2-1
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -136,6 +136,16 @@ def uptodate(xml_source,type_file):
     up_date = find_node[0].text
     return up_date
 
+def local_dependency(source,package):
+    dep_list = []
+    source_tree = etree.parse(sprpckg_dir+source+".xml")
+    source_root = source_tree.getroot()
+    local_dep = source_root[2].attrib['local']
+    for i in local_dep.strip().split(" "):
+        if i != package and len(local_dep.strip().split(" ")) > 0:
+            dep_list.append(i)
+        return dep_list
+        
 def upcontrol(srch,place):
     if place == "repo":
        repo_tree = etree.parse(repo) # Bu kısmı bir fonksiyonla kısalt
@@ -213,7 +223,6 @@ def sync_repo():
        try:
            retrieve(db_dir,mirror+db_file,db_dir+db_file)
            print("Database successfully updated.")
-           
        except:
            print("Database couldn't updated.")
            sys.exit(1)
@@ -234,17 +243,17 @@ def conflict(source):
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
     #Çakışmalar çözülüyor
-    print("Check for conflicts...")
+    text_formatting("Check for conflicts...",0)
     conflictcount = len(root[1]) #Çakışma buldu ama sistemde yoksa çakışma var demesine gerek yok
     conflicts = root[1]
     if conflictcount > 0:
-       print(str(conflictcount) + " conflicts have found.")
-       print("Following suprapackage(s) will remove. " )
+       text_formatting(str(conflictcount) + " conflicts have found.",1)
+       text_formatting("Following suprapackage(s) will remove. ",0)
        for conf in root[1]:
            try:
-               print(conf.text + " ==> " + get_description(conf.text))
+               text_formatting(conf.text + " ==> " + get_description(conf.text),1)
            except:
-               print(conf.text + " ==> There is no description for this package")
+               text_formatting(conf.text + " ==> There is no description for this package",1)
        answer = input("Are you want to remove these packages (Y/N): ")
        if answer == "Y" or answer == "y":
            for conf in root[1]:
@@ -256,10 +265,10 @@ def conflict(source):
        else:
            sys.exit("Suprapackage coulnd't installed.")
     else:
-       print("There is a no conflict")
+       text_formatting("There is a no conflict",1)
 
 def dependencies(source,action):
-    print("Resolving dependencies..")
+    text_formatting("Resolving dependencies..",0)
     #retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
@@ -267,30 +276,36 @@ def dependencies(source,action):
     dependcount = len(root[2])
     dependencies = root[2]
     if dependcount > 0:
-       print(str(dependcount) + " dependencies have found.")
+       text_formatting(str(dependcount) + " dependencies have found.",1)
        #Tamamen kaldırma işlemi için ....
        if action == "remove":
-           print("Following suprapackage(s) will remove. " )
+           text_formatting("Following suprapackage(s) will remove. ",1 )
            for dep in root[2]:
                try:
-                   print(dep.text + " ==> " + get_description(dep.text))
+                   text_formatting(dep.text + " ==> " + get_description(dep.text),1)
                except:
-                   print(dep.text + " ==> There is no description for this package")
+                   text_formatting(dep.text + " ==> There is no description for this package",1)
            answer = input("Are you want to remove these packages (Y/N): ")
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
-                   print(package + " suprapackage is removing")
-                   remove(package,"ddd")
+                   if len(local_dependency(package,source)) == 0:
+                       text_formatting("There is no dependencies in your system",0)
+                       #print(package + " suprapackage is removing")
+                       remove(package,"ddd")
+                   else:
+                        text_formatting("Following suprapackages requies " + package + " suprapackage",0)
+                        for i in local_dependency(package,source):
+                            text_formatting(i + " ==> " + get_description(i),1)
            else:
                sys.exit("Dependencies coulnd't removed so remove process couldn't continue.")
        else:
            print("Following suprapackage(s) will install. " )
            for dep in root[2]:
                try:
-                   print(dep.text + " ==> " + get_description(dep.text))
+                   text_formatting(dep.text + " ==> " + get_description(dep.text),1)
                except:
-                   print(dep.text + " ==> There is no description for this package")
+                   text_formatting(dep.text + " ==> There is no description for this package",1)
            answer = input("Are you want to install these packages (Y/N): ")
            if answer == "Y" or answer == "y":
                for dep in root[2]:
@@ -300,11 +315,12 @@ def dependencies(source,action):
                        install(package,"") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                    else:
                        print(package + " is already installed")
+                   modify_add(sprpckg_dir+package+".xml","<Dependencies","'>"," " + source,"previous") 
            else:
                os.remove(sprpckg_dir+source+".xml")
                sys.exit("Dependencies coulnd't installed so install process couldn't continue.")
     else:
-       print("There is a no dependencies")
+       text_formatting("There is a no dependencies",1)
 
 def install(source, place):
     if package_check(source) == "false":
@@ -438,7 +454,6 @@ def remove(source, rmv_type):
            elif action_type == "4": # Buraya reverse özelliklerini ekle
                try:
                    answer= step[0].attrib["answer"]
-                   print(answer)
                    text_formatting("-> " + str(len(step)-1) + " substep(s) will execute for this step",1)
                    for i in step:
                        try:
@@ -515,7 +530,7 @@ def modify_add(tar_file,srch,indicator,action,place):
     old_prop = get_prop.read()
     if place == "last":
        open(tar_file,"a").write("\n" + action)
-    with open(tar_file) as fin, NamedTemporaryFile(dir='.', delete=False) as fout:
+    with open(tar_file) as fin, NamedTemporaryFile(dir='.', delete=False) as fout: #Buraya try ile bir kod ekleyerek dosya bulunamadığındaki hatayı engelle
        counter = 0
        for line in fin:
            if place == "first" and counter == 0:
@@ -573,9 +588,14 @@ def upgrade():
            up_list.append(fname[:-4]);
            print(fname[:-4]+" Guncelle")
            counter = counter + 1
-    for up in up_list[0:]:
-       remove(up,"")
-       install(up,"")
+    if len(up_list) == 0:
+        text_formatting("There is nothing to do",0)
+    else:
+        text_formatting("Following suprapackage(s) will upgrade",0)
+        for up in up_list[0:]:
+            print(up)
+            remove(up,"")
+            install(up,"")
 
 def pacman(package,action):
     text_formatting("-> " + action + "ing " + package + " via pacman",1) #remove, removing eksikliğini düzelt
