@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.3-1
+#       Version:0.3-2
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -180,7 +180,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-    		
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -631,7 +631,8 @@ def pacman(package,action):
        retri = "pacman -S --noconfirm "+ package
     elif action == "remove":
        retri = "pacman -R --noconfirm "+ package
-    subprocess.Popen(retri, shell=True).wait()
+    devnull = open('/dev/null', 'w')
+    subprocess.Popen(retri, shell=True, stdout=devnull).wait()
 
 def execute(command):
     text_formatting("-> executing " + command + " in the shell",1)
