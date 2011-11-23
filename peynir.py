@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.3-5
+#       Version:0.3-6
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -188,7 +188,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-    		
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -415,6 +415,7 @@ def install(source, place):
 def remove(source, rmv_type, dep_source):
     if package_check(source) == "true":
        sys.exit("This suprapackage is not installed.")
+    text_formatting(":: " + source + " suprapackage is removing",0)
     if rmv_type == "complete":
        dependencies(source,"remove")
     local_dep = local_dependency(source," ")
@@ -424,7 +425,7 @@ def remove(source, rmv_type, dep_source):
     elif len(local_dep) > 0 and not "" in local_dep:
        text_formatting("Following suprapackages requies " + source + " suprapackage",0)
        for i in local_dependency(source," "):
-           if not i == "":
+           if not i == "" and not i == dep_source:
               text_formatting(i + " ==> " + get_description(i),1)
        if rmv_type != "skip":
            sys.exit(1)
@@ -435,7 +436,6 @@ def remove(source, rmv_type, dep_source):
         
                
 def remove_action(source, rmv_type):        
-    text_formatting(":: " + source + " suprapackage is removing",0)
     rmv_local_dependencies(source)
     try:
        tree = etree.parse(sprpckg_dir+source+".xml")
