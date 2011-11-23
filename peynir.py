@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.2-1
+#       Version:0.3-1
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -144,7 +144,7 @@ def local_dependency(source,package):
     for i in local_dep.strip().split(" "):
         if i != package and len(local_dep.strip().split(" ")) > 0:
             dep_list.append(i)
-        return dep_list
+    return dep_list
         
 def upcontrol(srch,place):
     if place == "repo":
@@ -180,7 +180,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-			
+    		
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -267,6 +267,16 @@ def conflict(source):
     else:
        text_formatting("There is a no conflict",1)
 
+def rmv_local_dependencies(source):
+    tree = etree.parse(sprpckg_dir+source+".xml")
+    root = tree.getroot()
+    dependcount = len(root[2])
+    dependencies = root[2]
+    if dependcount > 0:
+        for dep in dependencies:
+            modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",1)
+            print(sprpckg_dir + dep.text +".xml")
+            
 def dependencies(source,action):
     text_formatting("Resolving dependencies..",0)
     #retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
@@ -289,14 +299,7 @@ def dependencies(source,action):
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
-                   if len(local_dependency(package,source)) == 0:
-                       text_formatting("There is no dependencies in your system",0)
-                       #print(package + " suprapackage is removing")
-                       remove(package,"ddd")
-                   else:
-                        text_formatting("Following suprapackages requies " + package + " suprapackage",0)
-                        for i in local_dependency(package,source):
-                            text_formatting(i + " ==> " + get_description(i),1)
+                   remove(package,"skip",source)
            else:
                sys.exit("Dependencies coulnd't removed so remove process couldn't continue.")
        else:
@@ -398,12 +401,31 @@ def install(source, place):
            print("Error occureed in step of " + step)
            sys.exit(1)
 
-def remove(source, rmv_type):
+def remove(source, rmv_type, dep_source):
     if package_check(source) == "true":
        sys.exit("This suprapackage is not installed.")
     if rmv_type == "complete":
        dependencies(source,"remove")
+    local_dep = local_dependency(source," ")
+    
+    if len(local_dep) == 1 and not "" in local_dep and dep_source in local_dep:
+        remove_action(source, rmv_type)           
+    elif len(local_dep) > 0 and not "" in local_dep:
+       text_formatting("Following suprapackages requies " + source + " suprapackage",0)
+       for i in local_dependency(source," "):
+           if not i == "":
+              text_formatting(i + " ==> " + get_description(i),1)
+       if rmv_type != "skip":
+           sys.exit(1)
+       else:
+           print("Skipping removing " + source + " suprapackage and continue remove process") 
+    else:
+        remove_action(source, rmv_type)
+        
+               
+def remove_action(source, rmv_type):        
     print(source + " suprapackage is removing")
+    rmv_local_dependencies(source)
     try:
        tree = etree.parse(sprpckg_dir+source+".xml")
        os.remove(sprpckg_dir+source+".xml")
@@ -520,7 +542,7 @@ def modify(tar_file,srch,indicator,action,place,mdfy_type):
     if mdfy_type == "add":
        modify_add(tar_file,srch,indicator,action,place)
     elif mdfy_type == "remove":
-       modify_rmv(tar_file,srch,indicator,action,place," ")
+       modify_rmv(tar_file,srch,indicator,action,place," ",0)
 
 def modify_add(tar_file,srch,indicator,action,place):
     text_formatting("-> adding" + action + " to " + tar_file,1)
@@ -553,7 +575,7 @@ def modify_add(tar_file,srch,indicator,action,place):
        os.system("chmod " + old_prop.strip() + " " + tar_file)
        os.system("chown "+  old_owner.strip() + " " + tar_file)
 
-def modify_rmv(tar_file,srch,indicator,action,place,rplc):
+def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
     text_formatting("-> removing" + action + " from " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
@@ -569,7 +591,12 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc):
                if place == "previous":
                    line = line[:position].replace(action,rplc).strip() + line[position:]
                elif place == "next":
-                   line = line[:position] + line[position:].replace(action,rplc).strip()
+                   if indent >0:
+                       tabs = " "
+                       line = line[:position] + line[position:].replace(action,rplc).strip()
+                       line = tabs + line
+                   else:
+                       line = line[:position] + line[position:].replace(action,rplc).strip()
            if place == "after" or place == "before":
                if action in line:
                    line = ""
@@ -650,7 +677,7 @@ def main():
                 rqst = i.lower()
                 #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
                 db_file_check()
-                remove(rqst,"")
+                remove(rqst,"","")
         elif sys.argv[1] == "-Rs":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
@@ -658,7 +685,7 @@ def main():
                 rqst = i.lower()
                 #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
                 db_file_check()
-                remove(rqst,"complete")
+                remove(rqst,"complete","")
         elif sys.argv[1] == "-Ss":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
