@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.3-2
+#       Version:0.3-5
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -41,6 +41,14 @@ def text_formatting(source,level):
     for i in range(level):
         source = tab_space + source
     print(source)
+
+def file_check(source):
+    check = "false"
+    if not os.path.isfile(source):
+        check = "false"
+    else:
+        check = "true"
+    return check
     
 def db_file_check():
     if not os.path.isfile(db_dir+db_file):
@@ -180,7 +188,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-			
+    		
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -274,8 +282,11 @@ def rmv_local_dependencies(source):
     dependencies = root[2]
     if dependcount > 0:
         for dep in dependencies:
-            modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",1)
-            print(sprpckg_dir + dep.text +".xml")
+            if file_check(sprpckg_dir + dep.text +".xml") == "true":
+                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",1)
+            else:
+                text_formatting("There is no file to remove local dependencies",1)
+           #print(sprpckg_dir + dep.text +".xml")
             
 def dependencies(source,action):
     text_formatting("Resolving dependencies..",0)
@@ -341,8 +352,8 @@ def install(source, place):
     dependencies(source,"")
     root = tree.getroot()
     steps = len(root[3])
-    print(str(steps) + " step(s) will executed.")
-    print(source + " suprapackage is installing")
+    text_formatting(":: " + source + " suprapackage is installing",0)
+    text_formatting(str(steps) + " step(s) will executed.",0)
     counter = 1
     for step in root[3]:
        action_type = step.attrib["type"]
@@ -424,7 +435,7 @@ def remove(source, rmv_type, dep_source):
         
                
 def remove_action(source, rmv_type):        
-    print(source + " suprapackage is removing")
+    text_formatting(":: " + source + " suprapackage is removing",0)
     rmv_local_dependencies(source)
     try:
        tree = etree.parse(sprpckg_dir+source+".xml")
@@ -625,7 +636,7 @@ def upgrade():
             install(up,"")
 
 def pacman(package,action):
-    text_formatting("-> " + action + "ing " + package + " via pacman",1) #remove, removing eksikliğini düzelt
+    text_formatting("-> " + action.strip("e") + "ing " + package + " via pacman",1) #remove, removing eksikliğini düzelt
     import subprocess
     if action == "install":
        retri = "pacman -S --noconfirm "+ package
