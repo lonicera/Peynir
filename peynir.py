@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.4-1
+#       Version:0.4-2
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -143,7 +143,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-    		
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -322,12 +322,12 @@ def install(source, place):
                pacman(package,pac_action)
            elif action_type == "2":
                mdfy_type = step[0].attrib["type"]
-               source = step[0].attrib["source"]
+               source1 = step[0].attrib["source"]
                indicator = step[0].attrib["indicator"]
                search = step[0].attrib["search"]
                action = convert(step[0].text)
                place = step[0].attrib["place"]
-               modify(source,search,indicator,action,place,mdfy_type)
+               modify(source1,search,indicator,action,place,mdfy_type)
            elif action_type == "3":
                command = step.text
                execute(command)
@@ -612,7 +612,7 @@ def pacman(package,action):
     if action == "install":
        retri = "pacman -S --noconfirm "+ package
     elif action == "remove":
-       retri = "pacman -R --noconfirm "+ package
+       retri = "pacman -Rs --noconfirm "+ package
     devnull = open('/dev/null', 'w')
     subprocess.Popen(retri, shell=True, stdout=devnull).wait()
 
