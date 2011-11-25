@@ -419,7 +419,7 @@ def remove(source, rmv_type, dep_source):
        dependencies(source,"remove")
     local_dep = local_dependency(source," ")
     
-    if len(local_dep) == 1 and not "" in local_dep and dep_source in local_dep:
+    if (len(local_dep) == 1 and not "" in local_dep and dep_source in local_dep) or rmv_type == "upgrade":
         remove_action(source, rmv_type)           
     elif len(local_dep) > 0 and not "" in local_dep:
        text_formatting("Following suprapackages requies " + source + " suprapackage",0)
@@ -632,7 +632,7 @@ def upgrade():
         text_formatting("Following suprapackage(s) will upgrade",0)
         for up in up_list[0:]:
             print(up)
-            remove(up,"","")
+            remove(up,"upgrade","")
             install(up,"")
 
 def pacman(package,action):
