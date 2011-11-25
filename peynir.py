@@ -21,12 +21,13 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.3-7
+#       Version:0.4-1
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
 import urllib.request
 import difflib
+import subprocess
 from tempfile import NamedTemporaryFile
 
 repo = '/var/cache/peynir/peynir.xml'
@@ -53,11 +54,11 @@ def file_check(source):
 def db_file_check():
     if not os.path.isfile(db_dir+db_file):
         try:
-            print("Database could'nt found. Getting from server")
+            text_formatting("Database could'nt found. Getting from server",0)
             retrieve(db_dir,mirror+db_file,db_dir+db_file)
-            print("Database successfully updated.")
+            text_formatting("Database successfully updated.",0)
         except:
-            print("Database couldn't updated.")
+            text_formatting("Database couldn't updated.",0)
             sys.exit(1)
 
 def similarity(first,second):
@@ -78,65 +79,19 @@ def convert(source):
     result = source.replace(con_src,convert_library(con_src))
     return result
 
-#bu ve altındaki fonksiyon log oluşturmak oluşturulan girdileri düzenlemek için
-def indent(elem, level=0):
-    i = "\n" + level*"  "
-    if len(elem):
-       if not elem.text or not elem.text.strip():
-           elem.text = i + "  "
-       if not elem.tail or not elem.tail.strip():
-           elem.tail = i
-       for elem in elem:
-           indent(elem, level+1)
-       if not elem.tail or not elem.tail.strip():
-           elem.tail = i
-    else:
-       if level and (not elem.tail or not elem.tail.strip()):
-           elem.tail = i
-
-def printxml(xml):
-    import xml.etree.ElementTree as et
-    elem = et.fromstring(xml)
-    indent(elem)
-    return et.tostring(elem)
-
-#Log oluşturmak için ilk deneme
-def log_create(package,step_no,status):
-    log_check = os.path.isfile(log_dir+package+".xml")
-    if log_check:
-       with open(log_dir+package+".xml") as fin, NamedTemporaryFile(dir='.', delete=False) as fout:
-           for line in fin:
-               last_step_no = step_no -1
-               last_entry = line.find("no='"+str(last_step_no)+"'")
-               print(last_entry)
-               if last_entry > 0:
-                   line = line + "\n" + "<steps no='"+str(step_no)+"' status='"+status+"'> </step>"
-               elif step_no == 1 and line.find("<steps>") >0:
-                   line = line + "\n" + "<step no='1' status='"+status+"'> </step>"
-               fout.write(line.encode('utf8'))
-           os.rename(fout.name, log_dir+package+".xml")
-       duz = printxml(open(log_dir+package+".xml").read())
-       open(log_dir+package+".xml", "w").write(duz)
-    else:
-       file = open(log_dir+package+".xml", 'w')
-       std_content = printxml("<log><steps>\n  </steps></log>")
-       file.write("<?xml version='1.0' encoding='utf-8'?>\n")
-       file.write(std_content)
-       file.close()
-
 #Bu fonksiyon kodları kısaltmak üzere tasarladığım bir deneme; bir xml dosyasının belirli bölgesini seçmek için kullanılacak
 def uptodate(xml_source,type_file):
     if type_file == "web":
        try:
            tree = etree.parse(urllib.request.urlopen(xml_source))
        except:
-           print("Database couldn't updated.")
+           text_formatting("Database couldn't updated.",0)
            sys.exit(1)
     else:
         try:
             tree = etree.parse(xml_source)
         except:
-            print("There is a problem with xml file")
+            text_formatting("There is a problem with xml file",0)
             sys.exit(1)
             
     root = tree.getroot()
@@ -188,7 +143,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-			
+    		
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -198,7 +153,7 @@ def srch_pynr(srch,node,action):
     for comp in range(len(repo_search)):
        if action == "find":
            if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
-               print("Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%")
+               text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
        if repo_search[comp].text == srch and action == "absolute":
            result = "true"
            return result
@@ -214,7 +169,7 @@ def retrieve(place,url,file):
         data = usock.read()
         usock.close() 
     except:
-        print(file + " could not retrivied from mirror")
+        text_formatting(file + " could not retrivied from mirror",0)
         sys.exit(1)
 
     fp = open(file, 'wb')
@@ -230,12 +185,12 @@ def sync_repo():
     if not os.path.isfile(db_dir+db_file) or uptodate(db_dir+db_file,"local") != uptodate(mirror+db_file,"web"):
        try:
            retrieve(db_dir,mirror+db_file,db_dir+db_file)
-           print("Database successfully updated.")
+           text_formatting("Database successfully updated.",0)
        except:
-           print("Database couldn't updated.")
+           text_formatting("Database couldn't updated.",0)
            sys.exit(1)
     else:
-       print("Database already updated.")
+       text_formatting("Database already updated.",0)
        sys.exit(1)
 
 def package_check(package):
@@ -269,7 +224,7 @@ def conflict(source):
                if package_check(package) == "false":
                    remove(package,"","")
                else:
-                   print(package + " is not installed")
+                   text_formatting(package + " is not installed",0)
        else:
            sys.exit("Suprapackage coulnd't installed.")
     else:
@@ -314,7 +269,7 @@ def dependencies(source,action):
            else:
                sys.exit("Dependencies coulnd't removed so remove process couldn't continue.")
        else:
-           print("Following suprapackage(s) will install. " )
+           text_formatting("Following suprapackage(s) will install. ",0)
            for dep in root[2]:
                try:
                    text_formatting(dep.text + " ==> " + get_description(dep.text),1)
@@ -336,12 +291,13 @@ def dependencies(source,action):
        text_formatting("There is a no dependencies",1)
 
 def install(source, place):
-    if package_check(source) == "false":
+    if package_check(source) == "false" and not place == "local":
        sys.exit(":: This suprapackage already installed.")
     
     if place == "local":
        tree = etree.parse(os.getcwd()+"/"+source)
-       shutil.copyfile(source, sprpckg_dir+"/"+source)
+       if not os.path.isfile(source):
+           shutil.copyfile(source, sprpckg_dir+"/"+source)
        position = source.find('.')
        source = source[:position]
     else:
@@ -356,7 +312,7 @@ def install(source, place):
     counter = 1
     for step in root[3]:
        action_type = step.attrib["type"]
-       print("==> Step " + str(counter)+ " of " + str(steps) + " is executing")
+       text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing",0)
        #Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
        #Hata kontrolü kısmı başlangıcı
        try:
@@ -408,7 +364,7 @@ def install(source, place):
                            execute(command)
            counter = counter + 1
        except:
-           print("Error occureed in step of " + step)
+           text_formatting("Error occureed in step of " + step,0)
            sys.exit(1)
 
 def remove(source, rmv_type, dep_source):
@@ -429,7 +385,7 @@ def remove(source, rmv_type, dep_source):
        if rmv_type != "skip":
            sys.exit(1)
        else:
-           print("Skipping removing " + source + " suprapackage and continue remove process") 
+           text_formatting("Skipping removing " + source + " suprapackage and continue remove process",0) 
     else:
         remove_action(source, rmv_type)
         
@@ -440,7 +396,7 @@ def remove_action(source, rmv_type):
        tree = etree.parse(sprpckg_dir+source+".xml")
        os.remove(sprpckg_dir+source+".xml")
     except:
-       print("Local package couldn't found")
+       text_formatting("Local package couldn't found",0)
        sys.exit(1)
     root = tree.getroot()
     steps = len(root[3])
@@ -451,7 +407,7 @@ def remove_action(source, rmv_type):
            remove_tag = step.attrib["remove_tag"]
        except KeyError:
            remove_tag = " "
-       print("==> Step " + str(counter)+ " of " + str(steps) + " is executing")
+       text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing",0)
        try:
            if action_type == "1":
                if remove_tag == "skip":
@@ -545,7 +501,7 @@ def remove_action(source, rmv_type):
                    text_formatting("There is no defined action for this step",1)
            counter = counter + 1
        except:
-           print("Error")
+           text_formatting("Error",0) #bu ne bu, bu ne, ne hatası bu :)
            sys.exit(1)
      
 def modify(tar_file,srch,indicator,action,place,mdfy_type):
@@ -624,20 +580,35 @@ def upgrade():
     for fname in dirlist:
        if upcontrol(fname[:-4],"local") != upcontrol(fname[:-4],"repo"):
            up_list.append(fname[:-4]);
-           print(fname[:-4]+" Guncelle")
            counter = counter + 1
     if len(up_list) == 0:
         text_formatting("There is nothing to do",0)
     else:
         text_formatting("Following suprapackage(s) will upgrade",0)
         for up in up_list[0:]:
-            print(up)
+            text_formatting(up + " ==> " + get_description(up),1)
+        for up in up_list[0:]:
+            text_formatting(up + " suprapackage is upgrading ...",0)
+            #answer ı nasıl aktaracağız bakalım ???
+            try:
+                text_formatting("-> Retrieve updated suprapackage from server",1)
+                retrieve(sprpckg_dir,mirror + up +".xml",sprpckg_dir + up + "_bck" +".xml")
+            except:
+                text_formatting("-> There is a problem with getting updated suprapackage from server",1)
+            try:
+                tree = etree.parse(sprpckg_dir + up +".xml")
+                root = tree.getroot()
+                local_dep = root[2].attrib['local']
+                text_formatting("-> Transision local dependencies from old one to updated one",1)
+                modify_add(sprpckg_dir + up + "_bck"+".xml","<Dependencies","'>"," " + local_dep,"previous")
+            except:
+                text_formatting("-> Error from transision local dependencies")             
             remove(up,"upgrade","")
-            install(up,"")
+            shutil.move(sprpckg_dir + up + "_bck"+".xml", sprpckg_dir + up + ".xml")
+            install(up + ".xml","local")
 
 def pacman(package,action):
     text_formatting("-> " + action.strip("e") + "ing " + package + " via pacman",1) #remove, removing eksikliğini düzelt
-    import subprocess
     if action == "install":
        retri = "pacman -S --noconfirm "+ package
     elif action == "remove":
@@ -647,7 +618,6 @@ def pacman(package,action):
 
 def execute(command):
     text_formatting("-> executing " + command + " in the shell",1)
-    import subprocess
     retri = command
     subprocess.Popen(retri, shell=True).wait()
 
@@ -681,7 +651,7 @@ def main():
                     db_file_check()
                     install(rqst,"")
                 else:
-                    print('error: '+ rqst +' no such a suprapackage')
+                    text_formatting('error: '+ rqst +' no such a suprapackage',0)
         elif sys.argv[1] == "-R":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
@@ -703,13 +673,13 @@ def main():
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                print("Results for " + rqst)
+                text_formatting("Results for " + rqst,0)
                 db_file_check()
                 srch_pynr(rqst,'Peynir/Name','find')
         elif sys.argv[1] == "-U":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
-            print(sys.argv[2])
+            text_formatting(sys.argv[2],0)
             db_file_check()
             package = sys.argv[2]
             if package[-3:] != "xml":
@@ -719,7 +689,7 @@ def main():
             else:
                 text_formatting(":: This suprapackage already installed in your system.",0)
         else:
-            print("Invalid argument: " + sys.argv[1])
+            text_formatting("Invalid argument: " + sys.argv[1],0)
             sys.exit(1)
     else:
         sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
