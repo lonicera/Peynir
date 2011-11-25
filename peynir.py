@@ -188,7 +188,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-    		
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -267,7 +267,7 @@ def conflict(source):
            for conf in root[1]:
                package = conf.text
                if package_check(package) == "false":
-                   remove(package,"")
+                   remove(package,"","")
                else:
                    print(package + " is not installed")
        else:
@@ -632,7 +632,7 @@ def upgrade():
         text_formatting("Following suprapackage(s) will upgrade",0)
         for up in up_list[0:]:
             print(up)
-            remove(up,"")
+            remove(up,"","")
             install(up,"")
 
 def pacman(package,action):
