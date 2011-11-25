@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.3-6
+#       Version:0.3-7
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -188,7 +188,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-			
+    		
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -251,7 +251,7 @@ def conflict(source):
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
     #Çakışmalar çözülüyor
-    text_formatting("Check for conflicts...",0)
+    text_formatting(":: Check for conflicts...",0)
     conflictcount = len(root[1]) #Çakışma buldu ama sistemde yoksa çakışma var demesine gerek yok
     conflicts = root[1]
     if conflictcount > 0:
@@ -283,13 +283,13 @@ def rmv_local_dependencies(source):
     if dependcount > 0:
         for dep in dependencies:
             if file_check(sprpckg_dir + dep.text +".xml") == "true":
-                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",1)
+                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",4)
             else:
                 text_formatting("There is no file to remove local dependencies",1)
            #print(sprpckg_dir + dep.text +".xml")
             
 def dependencies(source,action):
-    text_formatting("Resolving dependencies..",0)
+    text_formatting(":: Resolving dependencies..",0)
     #retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
@@ -325,10 +325,9 @@ def dependencies(source,action):
                for dep in root[2]:
                    package = dep.text
                    if package_check(package) == "true":
-                       print(package + " suprapackage is installing")
                        install(package,"") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                    else:
-                       print(package + " is already installed")
+                       text_formatting(":: " + package + " is already installed",0)
                    modify_add(sprpckg_dir+package+".xml","<Dependencies","'>"," " + source,"previous") 
            else:
                os.remove(sprpckg_dir+source+".xml")
@@ -338,7 +337,7 @@ def dependencies(source,action):
 
 def install(source, place):
     if package_check(source) == "false":
-       sys.exit("This suprapackage already installed.")
+       sys.exit(":: This suprapackage already installed.")
     
     if place == "local":
        tree = etree.parse(os.getcwd()+"/"+source)
@@ -348,11 +347,11 @@ def install(source, place):
     else:
        retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
        tree = etree.parse(sprpckg_dir+source+".xml")
+    text_formatting(":: " + source + " suprapackage is installing",0)
     conflict(source)
     dependencies(source,"")
     root = tree.getroot()
     steps = len(root[3])
-    text_formatting(":: " + source + " suprapackage is installing",0)
     text_formatting(str(steps) + " step(s) will executed.",0)
     counter = 1
     for step in root[3]:
@@ -605,7 +604,8 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
                    if indent >0:
                        tabs = " "
                        line = line[:position] + line[position:].replace(action,rplc).strip()
-                       line = tabs + line
+                       for i in range(indent):
+                           line = tabs + line
                    else:
                        line = line[:position] + line[position:].replace(action,rplc).strip()
            if place == "after" or place == "before":
@@ -658,17 +658,17 @@ def main():
        sys.exit("You must be root to run this application, please use sudo and try again.")
     
     if len(sys.argv) == 1:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
     elif sys.argv[1] == "-Sy":
         sync_repo()
     elif sys.argv[1] == "-Su":
         upgrade()
     elif len(sys.argv) == 1:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-       sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+       sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
        sys.exit(1)
     elif len(sys.argv) > 2:
         if sys.argv[1] == "-S":
@@ -717,12 +717,12 @@ def main():
             if package_check(package[:-4]) == "true":
                 install(package,"local")
             else:
-                print("This suprapackage already installed in your system.")
+                text_formatting(":: This suprapackage already installed in your system.",0)
         else:
             print("Invalid argument: " + sys.argv[1])
             sys.exit(1)
     else:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1) 
 			 
 if __name__ == "__main__":
