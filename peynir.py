@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.4-2
+#       Version:0.4-3
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -143,7 +143,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-			
+    		
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -215,9 +215,17 @@ def conflict(source):
        for conf in root[1]:
            try:
                text_formatting(conf.text + " ==> " + get_description(conf.text),1)
+               if file_check(sprpckg_dir + conf.text + ".xml") == "true":
+                   check = "true"
+               else:
+                   check = "false"
            except:
                text_formatting(conf.text + " ==> There is no description for this package",1)
-       answer = input("Are you want to remove these packages (Y/N): ")
+       if check == "true":
+           answer = input("Are you want to remove these packages (Y/N): ")
+       else:
+           answer = "Y"
+            
        if answer == "Y" or answer == "y":
            for conf in root[1]:
                package = conf.text
@@ -501,7 +509,7 @@ def remove_action(source, rmv_type):
                    text_formatting("There is no defined action for this step",1)
            counter = counter + 1
        except:
-           text_formatting("Error",0) #bu ne bu, bu ne, ne hatası bu :)
+           text_formatting("Error occured when remove suprapackage",0) #bu ne bu, bu ne, ne hatası bu :)
            sys.exit(1)
      
 def modify(tar_file,srch,indicator,action,place,mdfy_type):
