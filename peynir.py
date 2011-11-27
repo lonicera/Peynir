@@ -34,7 +34,7 @@ repo = '/var/cache/peynir/peynir.xml'
 db_dir = '/var/cache/peynir/'
 sprpckg_dir = '/var/cache/peynir/packages/'
 mirror = 'http://lonicera.byethost7.com/'
-#log_dir = '/var/log/peynir/' Bu satır ileriki planlarda gereksiz, yakın zamanda kaldır
+#log_dir = '/var/log/peynir/' Bu satır ileriki planlarda gereksiz, yakın zamanda kaldırılabilir
 db_file = 'peynir.xml'
 
 def text_formatting(source,level):
@@ -249,7 +249,7 @@ def rmv_local_dependencies(source):
     if dependcount > 0:
         for dep in dependencies:
             if file_check(sprpckg_dir + dep.text +".xml") == "true":
-                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",4)
+                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",0)
             else:
                 text_formatting("There is no file to remove local dependencies",1)
             
@@ -292,7 +292,7 @@ def dependencies(source,action):
                        install(package,"") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                    else:
                        text_formatting(":: " + package + " is already installed",0)
-                   modify_add(sprpckg_dir+package+".xml","<Dependencies","'>"," " + source,"previous") 
+                   modify_add(sprpckg_dir+package+".xml","<Dependencies","'>"," " + source,"previous",0) 
            else:
                os.remove(sprpckg_dir+source+".xml")
                sys.exit("Dependencies coulnd't installed so install process couldn't continue.")
@@ -343,7 +343,7 @@ def install(source, place):
                question = step[0].text
                text_formatting("-> " + str(len(step)-1) + " substep(s) will execute for this step",1)
                answer = input(question)
-               modify_add(sprpckg_dir+source+".xml",question,"step","answer='"+answer+"' ","previous")
+               modify_add(sprpckg_dir+source+".xml",question,"step","answer='"+answer+"' ","previous",0)
                for i in step:
                    ans_action = i.text
                    position = ans_action.find('@')
@@ -514,11 +514,11 @@ def remove_action(source, rmv_type):
      
 def modify(tar_file,srch,indicator,action,place,mdfy_type):
     if mdfy_type == "add":
-       modify_add(tar_file,srch,indicator,action,place)
+       modify_add(tar_file,srch,indicator,action,place,0)
     elif mdfy_type == "remove":
        modify_rmv(tar_file,srch,indicator,action,place," ",0)
 
-def modify_add(tar_file,srch,indicator,action,place):
+def modify_add(tar_file,srch,indicator,action,place,indent):
     text_formatting("-> adding" + action + " to " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
@@ -534,9 +534,21 @@ def modify_add(tar_file,srch,indicator,action,place):
            elif srch in line:
                position = line.find(indicator)
                if place == "previous":
-                   line = line[:position] + action + line[position:]
+                   if indent >0:
+                       tabs = "  "
+                       line = line[:position] + action + line[position:]
+                       for i in range(indent):
+                           line = tabs + line
+                   else:
+                       line = line[:position] + action + line[position:]
                elif place == "next":
-                   line = line[:position+1] + action + line[position+1:]
+                   if indent >0:
+                       tabs = "  "
+                       line = line[:position+1] + action + line[position+1:]
+                       for i in range(indent):
+                           line = tabs + line
+                   else:
+                       line = line[:position+1] + action + line[position+1:]
                elif place == "after":
                    line = line + action + "\n"
                elif place == "before":
@@ -562,15 +574,21 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
            elif srch in line:
                position = line.find(indicator)
                if place == "previous":
-                   line = line[:position].replace(action,rplc).strip() + line[position:]
-               elif place == "next":
                    if indent >0:
-                       tabs = " "
-                       line = line[:position] + line[position:].replace(action,rplc).strip()
+                       tabs = "  "
+                       line = line[:position].replace(action,rplc).strip() + line[position:]
                        for i in range(indent):
                            line = tabs + line
                    else:
-                       line = line[:position] + line[position:].replace(action,rplc).strip()
+                       line = line[:position].replace(action,rplc).strip() + line[position:]
+               elif place == "next":
+                   if indent >0:
+                       tabs = "  "
+                       line = line[:position] + line[position:].replace(action,rplc)
+                       for i in range(indent):
+                           line = tabs + line
+                   else:
+                       line = line[:position] + line[position:].replace(action,rplc)
            if place == "after" or place == "before":
                if action in line:
                    line = ""
@@ -613,7 +631,7 @@ def upgrade():
                 root = tree.getroot()
                 local_dep = root[2].attrib['local']
                 text_formatting("-> Transision local dependencies from old one to updated one",1)
-                modify_add(sprpckg_dir + up + "_bck"+".xml","<Dependencies","'>"," " + local_dep,"previous")
+                modify_add(sprpckg_dir + up + "_bck"+".xml","<Dependencies","'>"," " + local_dep,"previous",0)
             except:
                 text_formatting("-> Error from transision local dependencies")             
             remove(up,"upgrade","")
