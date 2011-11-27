@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.4-3
+#       Version:0.4-4
 
 import os, sys, shutil
 import xml.etree.ElementTree as etree
@@ -34,7 +34,7 @@ repo = '/var/cache/peynir/peynir.xml'
 db_dir = '/var/cache/peynir/'
 sprpckg_dir = '/var/cache/peynir/packages/'
 mirror = 'http://lonicera.byethost7.com/'
-log_dir = '/var/log/peynir/'
+#log_dir = '/var/log/peynir/' Bu satır ileriki planlarda gereksiz, yakın zamanda kaldır
 db_file = 'peynir.xml'
 
 def text_formatting(source,level):
@@ -79,11 +79,16 @@ def convert(source):
     result = source.replace(con_src,convert_library(con_src))
     return result
 
-#Bu fonksiyon kodları kısaltmak üzere tasarladığım bir deneme; bir xml dosyasının belirli bölgesini seçmek için kullanılacak
 def uptodate(xml_source,type_file):
     if type_file == "web":
        try:
            tree = etree.parse(urllib.request.urlopen(xml_source))
+           text_formatting("-> Peynir also updating pacman repositories",1)
+           devnull = open('/dev/null', 'w')
+           try:
+               subprocess.Popen("pacman -Sy --noconfirm ", shell=True, stdout=devnull).wait()
+           except:
+               text_formatting("There is a problem with pacman sync repository, If you continue to upgrade, I can get some error",1) 
        except:
            text_formatting("Database couldn't updated.",0)
            sys.exit(1)
@@ -115,7 +120,6 @@ def upcontrol(srch,place):
        repo_root = repo_tree.getroot()
        result = "false"
        for step in repo_root[1]:
-           #print(step.tag)
            stopped = "false"
            for st in step:
                if stopped == "true" and st.tag == "Version":
@@ -123,7 +127,7 @@ def upcontrol(srch,place):
                if st.tag == "Name" and st.text == srch:
                    stopped = "true"
     if place == "local":
-       repo_tree = etree.parse(sprpckg_dir+srch+".xml") # Bu kısmı bir fonksiyonla kısalt
+       repo_tree = etree.parse(sprpckg_dir+srch+".xml")
        repo_root = repo_tree.getroot()
        for root in repo_root[0]:
            if root.tag == "Version":
@@ -143,7 +147,7 @@ def get_description(package):
         return repo_search1[(sayi*2)+1].text
     except:
         return "There is no description for this package"
-    		
+			
 def srch_pynr(srch,node,action):
     db_file_check()
     repo_tree = etree.parse(repo)
@@ -182,6 +186,7 @@ def retrieve(place,url,file):
     return status
 
 def sync_repo():
+    text_formatting(":: Local database synchronizing with server",0)
     if not os.path.isfile(db_dir+db_file) or uptodate(db_dir+db_file,"local") != uptodate(mirror+db_file,"web"):
        try:
            retrieve(db_dir,mirror+db_file,db_dir+db_file)
@@ -191,23 +196,21 @@ def sync_repo():
            sys.exit(1)
     else:
        text_formatting("Database already updated.",0)
-       sys.exit(1)
+       #sys.exit(1)
 
 def package_check(package):
     check_fail = "true"
     package_check = os.path.isfile(sprpckg_dir+package+".xml")
     if package_check:
        check_fail = "false"
-       #sys.exit("\nThis suprapackage already installed.\n")
     return check_fail
 
 def conflict(source):
-    #retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
     #Çakışmalar çözülüyor
     text_formatting(":: Check for conflicts...",0)
-    conflictcount = len(root[1]) #Çakışma buldu ama sistemde yoksa çakışma var demesine gerek yok
+    conflictcount = len(root[1])
     conflicts = root[1]
     if conflictcount > 0:
        text_formatting(str(conflictcount) + " conflicts have found.",1)
@@ -249,11 +252,9 @@ def rmv_local_dependencies(source):
                 modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",4)
             else:
                 text_formatting("There is no file to remove local dependencies",1)
-           #print(sprpckg_dir + dep.text +".xml")
             
 def dependencies(source,action):
     text_formatting(":: Resolving dependencies..",0)
-    #retrieve(sprpckg_dir,mirror+source+".xml",sprpckg_dir+source+".xml")
     tree = etree.parse(sprpckg_dir+source+".xml")
     root = tree.getroot()
     #Bağımlılıklar çözülüyor
@@ -322,7 +323,6 @@ def install(source, place):
        action_type = step.attrib["type"]
        text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing",0)
        #Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
-       #Hata kontrolü kısmı başlangıcı
        try:
            if action_type == "1":
                pac_action = step.attrib["action"]
@@ -544,7 +544,6 @@ def modify_add(tar_file,srch,indicator,action,place):
            fout.write(line.encode('utf8'))
            counter = counter + 1
        shutil.move(fout.name, tar_file)
-       #os.rename(fout.name, tar_file)
        #Alttaki satırları fonksiyona dönüştürver gari
        os.system("chmod " + old_prop.strip() + " " + tar_file)
        os.system("chown "+  old_owner.strip() + " " + tar_file)
@@ -595,6 +594,12 @@ def upgrade():
         text_formatting("Following suprapackage(s) will upgrade",0)
         for up in up_list[0:]:
             text_formatting(up + " ==> " + get_description(up),1)
+        devnull = open('/dev/null', 'w')
+        try:
+            text_formatting("-> Peynir first upgrade your system via pacman",1)
+            subprocess.Popen("pacman -Su --noconfirm ", shell=True, stdout=devnull).wait()
+        except:
+            text_formatting("There is a problem with upgrade the system via pacman, If you continue to upgrade, I can get some error",1)
         for up in up_list[0:]:
             text_formatting(up + " suprapackage is upgrading ...",0)
             #answer ı nasıl aktaracağız bakalım ???
@@ -631,7 +636,6 @@ def execute(command):
 
 ### Ana bölüm
 def main():
-    #log_create("gnome",1,"oldu")
     if not os.geteuid()==0:
        sys.exit("You must be root to run this application, please use sudo and try again.")
     
@@ -642,6 +646,9 @@ def main():
         sync_repo()
     elif sys.argv[1] == "-Su":
         upgrade()
+    elif sys.argv[1] == "-Syu":
+        sync_repo()
+        upgrade()    
     elif len(sys.argv) == 1:
         sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
         sys.exit(1)
@@ -654,7 +661,6 @@ def main():
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
                 if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
                     db_file_check()
                     install(rqst,"")
@@ -665,7 +671,6 @@ def main():
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
                 db_file_check()
                 remove(rqst,"","")
         elif sys.argv[1] == "-Rs":
@@ -673,7 +678,6 @@ def main():
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                #rqst = sys.argv[2].lower().strip() #Burada belki gelen kodun heriki tarafındaki boşluklar atılabilir
                 db_file_check()
                 remove(rqst,"complete","")
         elif sys.argv[1] == "-Ss":
