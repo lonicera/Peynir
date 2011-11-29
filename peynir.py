@@ -149,19 +149,23 @@ def get_description(package):
         return "There is no description for this package"
 			
 def srch_pynr(srch,node,action):
-    db_file_check()
+    #db_file_check()
     repo_tree = etree.parse(repo)
     repo_root = repo_tree.getroot()
     repo_search = repo_root[1].findall(node)
     result = "false"
-    for comp in range(len(repo_search)):
-       if action == "find":
-           if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
-               text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
-       if repo_search[comp].text == srch and action == "absolute":
-           result = "true"
-           return result
-           break
+    if srch == "all":
+        for rep in repo_root[1]:
+            text_formatting(rep[0].text + " ==> " + get_description(rep[0].text),1)
+    else:
+        for comp in range(len(repo_search)):
+            if action == "find":
+                if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
+                    text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
+            if repo_search[comp].text == srch and action == "absolute":
+                result = "true"
+                return result
+                break
 
 def retrieve(place,url,file):
     status = "false"
@@ -519,7 +523,7 @@ def modify(tar_file,srch,indicator,action,place,mdfy_type):
        modify_rmv(tar_file,srch,indicator,action,place," ",0)
 
 def modify_add(tar_file,srch,indicator,action,place):
-    text_formatting("-> adding" + action + " to " + tar_file,1)
+    text_formatting("-> adding " + action + " to " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
@@ -549,7 +553,7 @@ def modify_add(tar_file,srch,indicator,action,place):
        os.system("chown "+  old_owner.strip() + " " + tar_file)
 
 def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
-    text_formatting("-> removing" + action + " from " + tar_file,1)
+    text_formatting("-> removing " + action + " from " + tar_file,1)
     get_owner = os.popen("ls -l "+tar_file+"|awk '{print $3}'")
     old_owner = get_owner.read()
     get_prop = os.popen("stat -c %a "+tar_file)
