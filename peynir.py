@@ -23,7 +23,7 @@
 #
 #       Version:0.4-5
 
-import os, sys, shutil
+import os, sys, shutil 
 import xml.etree.ElementTree as etree
 import urllib.request
 import difflib
@@ -160,7 +160,7 @@ def srch_pynr(srch,node,action):
     else:
         for comp in range(len(repo_search)):
             if action == "find":
-                if similarity(str(repo_search[comp].text),str(srch)) > 0.45:
+                if similarity(str(repo_search[comp].text),str(srch)) > 0.45 and range(len(repo_search)) >0:
                     text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
             if repo_search[comp].text == srch and action == "absolute":
                 result = "true"
@@ -179,7 +179,6 @@ def retrieve(place,url,file):
     except:
         text_formatting(file + " could not retrivied from mirror",0)
         sys.exit(1)
-
     fp = open(file, 'wb')
     fp.write(data)
     fp.close()
@@ -201,6 +200,7 @@ def sync_repo():
     else:
        text_formatting("Database already updated.",0)
        #sys.exit(1)
+
 
 def package_check(package):
     check_fail = "true"
@@ -253,7 +253,7 @@ def rmv_local_dependencies(source):
     if dependcount > 0:
         for dep in dependencies:
             if file_check(sprpckg_dir + dep.text +".xml") == "true":
-                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next","",4)
+                modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next"," ",4)
             else:
                 text_formatting("There is no file to remove local dependencies",1)
             
@@ -562,7 +562,7 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
        counter = 0
        for line in fin:
            if place == "first" and counter == 0:
-               line = line.replace(action,rplc).strip()
+               line = line.replace(action,rplc)
            elif srch in line:
                position = line.find(indicator)
                if place == "previous":
@@ -570,11 +570,11 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
                elif place == "next":
                    if indent >0:
                        tabs = " "
-                       line = line[:position] + line[position:].replace(action,rplc).strip()
+                       line = line[:position] + line[position:].replace(action,rplc)
                        for i in range(indent):
                            line = tabs + line
                    else:
-                       line = line[:position] + line[position:].replace(action,rplc).strip()
+                       line = line[:position] + line[position:].replace(action,rplc)
            if place == "after" or place == "before":
                if action in line:
                    line = ""
