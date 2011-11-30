@@ -584,6 +584,16 @@ def modify_rmv(tar_file,srch,indicator,action,place,rplc,indent):
        os.system("chmod " + old_prop.strip() + " " + tar_file)
        os.system("chown "+  old_owner.strip() + " " + tar_file)
 
+def local_search(source):
+    dirlist=os.listdir(sprpckg_dir)
+    counter = 0
+    for fname in dirlist:
+       if source == "" or source == "all":
+           text_formatting(fname[:-4] + " ==> " + get_description(fname[:-4]),1)  
+       elif similarity(fname[:-4],source) > 0.45 and len(dirlist) >0:
+           text_formatting(fname[:-4] + " ==> " + get_description(fname[:-4]),1) 
+    
+
 def upgrade():
     dirlist=os.listdir(sprpckg_dir)
     counter = 0
@@ -641,10 +651,10 @@ def execute(command):
 ### Ana bölüm
 def main():
     if not os.geteuid()==0:
-       sys.exit("You must be root to run this application, please use sudo and try again.")
+        sys.exit("You must be root to run this application, please use sudo and try again.")
     
     if len(sys.argv) == 1:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n')
         sys.exit(1)
     elif sys.argv[1] == "-Sy":
         sync_repo()
@@ -654,11 +664,11 @@ def main():
         sync_repo()
         upgrade()    
     elif len(sys.argv) == 1:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n')
         sys.exit(1)
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-       sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
-       sys.exit(1)
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n')
+        sys.exit(1)
     elif len(sys.argv) > 2:
         if sys.argv[1] == "-S":
             argv_len = len(sys.argv)
@@ -692,6 +702,14 @@ def main():
                 text_formatting("Results for " + rqst,0)
                 db_file_check()
                 srch_pynr(rqst,'Peynir/Name','find')
+        elif sys.argv[1] == "-Qs":
+            argv_len = len(sys.argv)
+            raw_rqst = sys.argv[2:argv_len]
+            for i in raw_rqst:
+                rqst = i.lower()
+                text_formatting("Results for " + rqst,0)
+                db_file_check()
+                local_search(rqst) 
         elif sys.argv[1] == "-U":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
@@ -708,7 +726,7 @@ def main():
             text_formatting("Invalid argument: " + sys.argv[1],0)
             sys.exit(1)
     else:
-        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -h Display the help screen \n')
+        sys.stderr.write('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n')
         sys.exit(1) 
 			 
 if __name__ == "__main__":
