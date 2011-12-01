@@ -112,9 +112,9 @@ def upcontrol(srch,place):
        repo_root = repo_tree.getroot()
        result = "false"
        for step in repo_root[1]:
-           #stopped = "false"
+           stopped = "false"
            for st in step:
-               if stopped and st.tag == "Version":
+               if stopped == "true" and st.tag == "Version":
                    return st.text
                if st.tag == "Name" and st.text == srch:
                    stopped = "true"
@@ -145,6 +145,7 @@ def srch_pynr(srch,node,action):
     repo_tree = etree.parse(repo)
     repo_root = repo_tree.getroot()
     repo_search = repo_root[1].findall(node)
+    result = "false"
     if srch == "all":
         for rep in repo_root[1]:
             text_formatting(rep[0].text + " ==> " + get_description(rep[0].text),1)
@@ -154,7 +155,8 @@ def srch_pynr(srch,node,action):
                 if similarity(str(repo_search[comp].text),str(srch)) > 0.45 and int(len(repo_search)) >0:
                     text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
             if repo_search[comp].text == srch and action == "absolute":
-                return True
+                result = "true"
+                return result
                 break
 
 def retrieve(place,url,file):
