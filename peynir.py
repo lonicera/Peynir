@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.4-5
+#       Version:0.4-6
 
 import os, sys, shutil 
 import xml.etree.ElementTree as etree
@@ -42,14 +42,6 @@ def text_formatting(source,level):
     for i in range(level):
         source = tab_space + source
     print(source)
-
-def file_check(source):
-    check = "false"
-    if not os.path.isfile(source):
-        check = "false"
-    else:
-        check = "true"
-    return check
     
 def db_file_check():
     if not os.path.isfile(db_dir+db_file):
@@ -120,9 +112,9 @@ def upcontrol(srch,place):
        repo_root = repo_tree.getroot()
        result = "false"
        for step in repo_root[1]:
-           stopped = "false"
+           #stopped = "false"
            for st in step:
-               if stopped == "true" and st.tag == "Version":
+               if stopped and st.tag == "Version":
                    return st.text
                if st.tag == "Name" and st.text == srch:
                    stopped = "true"
@@ -153,18 +145,16 @@ def srch_pynr(srch,node,action):
     repo_tree = etree.parse(repo)
     repo_root = repo_tree.getroot()
     repo_search = repo_root[1].findall(node)
-    result = "false"
     if srch == "all":
         for rep in repo_root[1]:
             text_formatting(rep[0].text + " ==> " + get_description(rep[0].text),1)
     else:
         for comp in range(len(repo_search)):
             if action == "find":
-                if similarity(str(repo_search[comp].text),str(srch)) > 0.45 and range(len(repo_search)) >0:
+                if similarity(str(repo_search[comp].text),str(srch)) > 0.45 and int(len(repo_search)) >0:
                     text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
             if repo_search[comp].text == srch and action == "absolute":
-                result = "true"
-                return result
+                return True
                 break
 
 def retrieve(place,url,file):
@@ -222,13 +212,9 @@ def conflict(source):
        for conf in root[1]:
            try:
                text_formatting(conf.text + " ==> " + get_description(conf.text),1)
-               if file_check(sprpckg_dir + conf.text + ".xml") == "true":
-                   check = "true"
-               else:
-                   check = "false"
            except:
                text_formatting(conf.text + " ==> There is no description for this package",1)
-       if check == "true":
+       if os.path.isfile(sprpckg_dir + conf.text + ".xml"):
            answer = input("Are you want to remove these packages (Y/N): ")
        else:
            answer = "Y"
@@ -252,7 +238,7 @@ def rmv_local_dependencies(source):
     dependencies = root[2]
     if dependcount > 0:
         for dep in dependencies:
-            if file_check(sprpckg_dir + dep.text +".xml") == "true":
+            if os.path.isfile(sprpckg_dir + dep.text +".xml"):
                 modify_rmv(sprpckg_dir + dep.text +".xml","<Dependencies ",""," " + source,"next"," ",4)
             else:
                 text_formatting("There is no file to remove local dependencies",1)
