@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 #
 #
-#       Version:0.4-6
+#       Version:0.4-7
 
 import os, sys, shutil 
 import xml.etree.ElementTree as etree
@@ -106,18 +106,16 @@ def local_dependency(source,package):
             dep_list.append(i)
     return dep_list
         
-def upcontrol(srch,place):
+def upcontrol(srch,place,stopped=False):
     if place == "repo":
        repo_tree = etree.parse(repo) # Bu kısmı bir fonksiyonla kısalt
        repo_root = repo_tree.getroot()
-       result = "false"
        for step in repo_root[1]:
-           stopped = "false"
            for st in step:
-               if stopped == "true" and st.tag == "Version":
+               if stopped and st.tag == "Version":
                    return st.text
                if st.tag == "Name" and st.text == srch:
-                   stopped = "true"
+                   stopped = True
     if place == "local":
        repo_tree = etree.parse(sprpckg_dir+srch+".xml")
        repo_root = repo_tree.getroot()
@@ -145,7 +143,6 @@ def srch_pynr(srch,node,action):
     repo_tree = etree.parse(repo)
     repo_root = repo_tree.getroot()
     repo_search = repo_root[1].findall(node)
-    result = "false"
     if srch == "all":
         for rep in repo_root[1]:
             text_formatting(rep[0].text + " ==> " + get_description(rep[0].text),1)
@@ -155,8 +152,7 @@ def srch_pynr(srch,node,action):
                 if similarity(str(repo_search[comp].text),str(srch)) > 0.45 and int(len(repo_search)) >0:
                     text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
             if repo_search[comp].text == srch and action == "absolute":
-                result = "true"
-                return result
+                return True
                 break
 
 def retrieve(place,url,file):
@@ -174,11 +170,6 @@ def retrieve(place,url,file):
     fp = open(file, 'wb')
     fp.write(data)
     fp.close()
-    if fp.close():
-       status = "true"
-    else:
-       status = "false"
-    return status
 
 def sync_repo():
     text_formatting(":: Local database synchronizing with server",0)
@@ -195,11 +186,7 @@ def sync_repo():
 
 
 def package_check(package):
-    check_fail = "true"
-    package_check = os.path.isfile(sprpckg_dir+package+".xml")
-    if package_check:
-       check_fail = "false"
-    return check_fail
+    return os.path.isfile(sprpckg_dir+package+".xml")
 
 def conflict(source):
     tree = etree.parse(sprpckg_dir+source+".xml")
@@ -224,7 +211,7 @@ def conflict(source):
        if answer == "Y" or answer == "y":
            for conf in root[1]:
                package = conf.text
-               if package_check(package) == "false":
+               if package_check(package):
                    remove(package,"","")
                else:
                    text_formatting(package + " is not installed",0)
@@ -280,7 +267,7 @@ def dependencies(source,action):
            if answer == "Y" or answer == "y":
                for dep in root[2]:
                    package = dep.text
-                   if package_check(package) == "true":
+                   if not package_check(package):
                        install(package,"") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                    else:
                        text_formatting(":: " + package + " is already installed",0)
@@ -292,12 +279,12 @@ def dependencies(source,action):
        text_formatting("There is a no dependencies",1)
 
 def install(source, place):
-    if package_check(source) == "false" and not place == "local":
+    if package_check(source) and not place == "local":
        sys.exit(":: This suprapackage already installed.")
     
     if place == "local":
        tree = etree.parse(os.getcwd()+"/"+source)
-       if not os.path.isfile(source):
+       if not os.path.isfile(sprpckg_dir+"/"+source):
            shutil.copyfile(source, sprpckg_dir+"/"+source)
        position = source.find('.')
        source = source[:position]
@@ -368,7 +355,7 @@ def install(source, place):
            sys.exit(1)
 
 def remove(source, rmv_type, dep_source):
-    if package_check(source) == "true":
+    if not package_check(source):
        sys.exit("This suprapackage is not installed.")
     text_formatting(":: " + source + " suprapackage is removing",0)
     if rmv_type == "complete":
@@ -663,7 +650,7 @@ def main():
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                if srch_pynr(rqst,'Peynir/Name','absolute') == "true":
+                if srch_pynr(rqst,'Peynir/Name','absolute'):
                     db_file_check()
                     install(rqst,"")
                 else:
@@ -706,7 +693,7 @@ def main():
             package = sys.argv[2]
             if package[-3:] != "xml":
                 package = package+".xml"
-            if package_check(package[:-4]) == "true":
+            if not package_check(package[:-4]):
                 install(package,"local")
             else:
                 text_formatting(":: This suprapackage already installed in your system.",0)
