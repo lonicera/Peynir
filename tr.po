@@ -1,0 +1,276 @@
+# Turkish translations for 0.1 package.
+# Copyright (C) 2011 THE 0.1'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the 0.1 package.
+# FIRST AUTHOR <dogan1aydin@gmail.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-12-05 16:06+0200\n"
+"PO-Revision-Date: 2011-12-05 16:51+0200\n"
+"Last-Translator: Doğan Aydın <dogan@doganaydin.org>\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: peynir.py:49
+msgid "Database could'nt found. Getting from server"
+msgstr "Veri tabanı bulunamadı. Sunucudan getiriliyor"
+
+#: peynir.py:51 peynir.py:179
+msgid "Database successfully updated."
+msgstr "Veri tabanı başarıyla güncellendi."
+
+#: peynir.py:53 peynir.py:85 peynir.py:181
+msgid "Database couldn't updated."
+msgstr "Veri tabanı güncellenemedi."
+
+#: peynir.py:78
+msgid "-> Peynir also updating pacman repositories"
+msgstr "Peynir pacman depolarını da günceller"
+
+#: peynir.py:83
+msgid ""
+"There is a problem with pacman sync repository, If you continue to upgrade, "
+"I can get some error"
+msgstr ""
+"Pacman sync depolarıyla ilgili bir sorun var. Eğer güncellemeye devam "
+"ederseniz, hatalar ile karşılaşabilirsiniz."
+
+#: peynir.py:91
+msgid "There is a problem with xml file"
+msgstr "Xml dosyası ile ilgili sorun var"
+
+#: peynir.py:139
+msgid "There is no description for this package"
+msgstr "Bu paket için açıklama bulunmuyor"
+
+#: peynir.py:168
+msgid " could not retrivied from mirror"
+msgstr " yansılardan alınamadı"
+
+#: peynir.py:175
+msgid ":: Local database synchronizing with server"
+msgstr ":: Yerel veri tabanı sunucu ile senkronize ediliyor"
+
+#: peynir.py:184
+msgid "Database already updated."
+msgstr "Veri tabanı zaten güncel."
+
+#: peynir.py:195
+msgid ":: Check for conflicts..."
+msgstr ":: Çakışmalar kontrol ediliyor..."
+
+#: peynir.py:199
+msgid " conflicts have found."
+msgstr " çakışma bulundu."
+
+#: peynir.py:200 peynir.py:247
+msgid "Following suprapackage(s) will remove. "
+msgstr "Bu üstpaketler kaldırılacak. "
+
+#: peynir.py:205 peynir.py:252 peynir.py:267
+msgid " ==> There is no description for this package"
+msgstr " ==> Bu paket için açıklama yok"
+
+#: peynir.py:207 peynir.py:253
+msgid "Are you want to remove these packages (Y/N): "
+msgstr "Bu paketleri kaldırmak istiyor musunuz (E/H): "
+
+#: peynir.py:210 peynir.py:212 peynir.py:255 peynir.py:270
+msgid "Y"
+msgstr "E"
+
+#: peynir.py:218
+msgid " is not installed"
+msgstr " kurulu değil"
+
+#: peynir.py:220
+msgid "Suprapackage coulnd't installed."
+msgstr "Üst paket kurulamadı."
+
+#: peynir.py:222
+msgid "There is a no conflict"
+msgstr "Çakışma yok"
+
+#: peynir.py:234
+msgid "There is no file to remove local dependencies"
+msgstr "Yerel bağımlılıkları kaldırmak için dosya yok"
+
+#: peynir.py:237
+msgid ":: Resolving dependencies.."
+msgstr ":: Bağımlılıklar çözülüyor.."
+
+#: peynir.py:244
+msgid " dependencies have found."
+msgstr " bağımlılık bulundu."
+
+#: peynir.py:260
+msgid "Dependencies coulnd't removed so remove process couldn't continue."
+msgstr "Bağımlılıklar kaldırılamadı çünkü işlem devam edemiyor."
+
+#: peynir.py:262
+msgid "Following suprapackage(s) will install. "
+msgstr "Bu üstpaketler kurulacak. "
+
+#: peynir.py:268
+msgid "Are you want to install these packages (Y/N): "
+msgstr "Bu paketleri kurmak istiyor musunuz (E/H): "
+
+#: peynir.py:276
+msgid " is already installed"
+msgstr " zaten kurulu"
+
+#: peynir.py:280
+msgid "Dependencies coulnd't installed so install process couldn't continue."
+msgstr "Bağımlılıklar kurulamadı çünkü kurulum işlemi devam edemiyor."
+
+#: peynir.py:282
+msgid "There is a no dependencies"
+msgstr "Bağımlılık yok"
+
+#: peynir.py:286
+msgid ":: This suprapackage already installed."
+msgstr ":: Bu üstpaket zaten kurulu."
+
+#: peynir.py:297
+msgid " suprapackage is installing"
+msgstr " üstpaketi kuruluyor"
+
+#: peynir.py:302
+msgid " step(s) will executed."
+msgstr " adımları çalıştırılıyor."
+
+#: peynir.py:326 peynir.py:435
+msgid " substep(s) will execute for this step"
+msgstr " alt adımı bu adım için çalıştırılıyor"
+
+#: peynir.py:357
+msgid "Error occureed in step of "
+msgstr "Bu adımda hata oluştu "
+
+#: peynir.py:362
+msgid "This suprapackage is not installed."
+msgstr "Bu üstpaket kurulu değil"
+
+#: peynir.py:363
+msgid " suprapackage is removing"
+msgstr " üstpaketi kaldırılıyor"
+
+#: peynir.py:371
+msgid "Following suprapackages requies "
+msgstr "Bu üstpaketler "
+
+#: peynir.py:371
+msgid " suprapackage"
+msgstr " üstpaketlerini gerektiriyor"
+
+#: peynir.py:378
+msgid "Skipping removing "
+msgstr "Atlanan kaldırma üstpaketi: "
+
+#: peynir.py:378
+msgid " suprapackage and continue remove process"
+msgstr " kaldırma işlemine devam ediliyor"
+
+#: peynir.py:389
+msgid "Local package couldn't found"
+msgstr "Yerel paket bulunamadı"
+
+#: peynir.py:404 peynir.py:410 peynir.py:425 peynir.py:447 peynir.py:460
+#: peynir.py:477
+msgid "-> Skipping this step for remove action"
+msgstr "-> Bu adım kaldırma işlemi için atlanıyor"
+
+#: peynir.py:431 peynir.py:491
+msgid "There is no defined action for this step"
+msgstr "Bu adım için tanımlanmış aksiyon yok"
+
+#: peynir.py:494
+msgid "Error occured when remove suprapackage"
+msgstr "Üst paket kaldırılırken hata oluştu"
+
+#: peynir.py:584
+msgid "There is nothing to do"
+msgstr "Yapacak bir şey yok"
+
+#: peynir.py:586
+msgid "Following suprapackage(s) will upgrade"
+msgstr "Bu üstpaket(ler) güncellenecek"
+
+#: peynir.py:591
+msgid "-> Peynir first upgrade your system via pacman"
+msgstr "-> Peynir ilk önce pacman kullanarak sisteminizi güncelleştirecek"
+
+#: peynir.py:594
+msgid ""
+"There is a problem with upgrade the system via pacman, If you continue to "
+"upgrade, I can get some error"
+msgstr ""
+"Sistemi pacman ile güncellerken bir sorun oluştu. Eğer güncellemeye devam "
+"ederseniz sorunlarla karşılaşabilirsiniz"
+
+#: peynir.py:596
+msgid " suprapackage is upgrading ..."
+msgstr " üstpaketi güncelleştiriliyor ..."
+
+#: peynir.py:599
+msgid "-> Retrieve updated suprapackage from server"
+msgstr "-> Güncel üstpaketler sunucudan alınıyor"
+
+#: peynir.py:602
+msgid "-> There is a problem with getting updated suprapackage from server"
+msgstr "-> Güncel üstpaketler sunucudan alınırken sorun oluştu"
+
+#: peynir.py:607
+msgid "-> Transision local dependencies from old one to updated one"
+msgstr "-> Yerel bağımlılıklar eski olandan yeni olana geçiriliyor"
+
+#: peynir.py:610
+msgid "-> Error from transision local dependencies"
+msgstr "-> Yerel bağımlılıklar güncel olana geçirilirken hata oluştu"
+
+#: peynir.py:632
+msgid ""
+"You must be root to run this application, please use sudo and try again."
+msgstr ""
+"Bu uygulamayı çalıştırabilmeniz için root olmanız gerekli. Sudo kullanarak "
+"tekrar deneyin."
+
+#: peynir.py:635 peynir.py:645 peynir.py:648 peynir.py:707
+msgid ""
+"Usage: peynir [command] [suprapackage] \n"
+" Commands: \n"
+"        -S Install suprapackage \n"
+"        -U Install local suprapackage \n"
+"        -R Remove suprapackage \n"
+"        -Rs Remove suprapackage and its dependencies \n"
+"        -Sy Update repository \n"
+"        -Su Upgrade the system \n"
+"        -Ss Search suprapackege in repository \n"
+"        -Qs Search suprapackege in local \n"
+"        -h Display the help screen \n"
+msgstr ""
+"Kullanım: peynir [komut] [ustpaket] \n"
+" Commands: \n"
+"        -S Üstpaket kur \n"
+"        -U Yerel üstpaket kur \n"
+"        -R Üstpaket kaldır \n"
+"        -Rs Üstpaketi ve bağımlılıklarını kaldır \n"
+"        -Sy Depoları güncelleştir \n"
+"        -Su Sistemi güncelleştir \n"
+"        -Ss Üstpaketi depoda ara \n"
+"        -Qs Üstpaketi yerelde ara \n"
+"        -h Yardım ekranını göster \n"
+
+#: peynir.py:702
+msgid ":: This suprapackage already installed in your system."
+msgstr ":: Bu üstpaket zaten sisteminizde kurulu."
+
+#: peynir.py:704
+msgid "Invalid argument: "
+msgstr "Geçersiz parametre: "
