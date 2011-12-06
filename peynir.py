@@ -156,7 +156,6 @@ def srch_pynr(srch,node,action):
                 break
 
 def retrieve(place,url,file):
-    status = "false"
     os.chdir(place)
     try:
         req=urllib.request.Request(url)
