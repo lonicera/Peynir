@@ -30,7 +30,7 @@ import difflib
 import subprocess
 from tempfile import NamedTemporaryFile
 import gettext
-gettext.bindtextdomain("peynir","language")
+gettext.bindtextdomain("peynir","/opt/peynir/language")
 gettext.textdomain("peynir")
 _ = gettext.gettext
 
