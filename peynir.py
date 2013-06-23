@@ -44,7 +44,10 @@ class Constants:
         self.db_file = 'peynir.xml'
         self.log_file = '/var/cache/peynir/peynir_log.log'
         self.confm = False
+        self.debug = False
         self.cachedir = None
+        self.silence = False
+        self.command_output = 'Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -O Repair system or package (not fully implemented) \n        -h Display the help screen \n Options: \n        --no-confirm Do not prompt for any confirmation \n        --cache-dir [path] Overrides the default location of the package cache directory. \n        --debug Log everyhing (including info, warning and errors) \n        --silence No output \n'
 
 cons = Constants()
 
@@ -88,13 +91,11 @@ class Search:
             for comp in range(len(repo_search)):
                 if action == "find":
                     if self.similarity(str(repo_search[comp].text),str(srch)) > 0.45 and int(len(repo_search)) >0:
-                        text.text_formatting("-> Found " + repo_search[comp].text + " similarity is " + str(self.similarity(str(repo_search[comp].text),str(srch))*100)+"%",1)
+                        text.text_formatting(_("-> Found ") + repo_search[comp].text + _(" similarity is ") + str(self.similarity(str(repo_search[comp].text),str(srch))*100)+"%", 1, 'info')
                 if repo_search[comp].text == srch and action == "absolute":
                     return True
                     break
-
 search = Search() 
-
 
 class Repair:
     """ Check suprapackage and correct system """
@@ -102,29 +103,29 @@ class Repair:
         tree = etree.parse(cons.sprpckg_dir+package)
         root = tree.getroot()
         steps = len(root[3])
-        text.text_formatting(str(steps) + _(" step(s) will checked."),0,'debug')
+        text.text_formatting(str(steps) + _(" step(s) will checked."), 0, 'info')
         counter = 1
         for step in root[3]:
-            text.text_formatting("==> Step " + str(counter) + " of " + str(steps) + " is checking",0,'debug')
+            text.text_formatting("==> Step " + str(counter) + " of " + str(steps) + " is checking", 0, 'debug')
             action_type = step.attrib["type"]
             if action_type == "1":
-                local_pacman_dir = "/var/lib/pacman/local/"
+                local_pacman_dir = "/var/lib/pacman/local/" #Constan kısmına eklenebilir
                 pac_action = step.attrib["action"]
                 package = step.text
-                text.text_formatting(_(package + " is checking... "),0,'debug')
+                text.text_formatting(package + _(" is checking... "), 0, 'info')
                 if pac_action == "install":
                     if not package in os.listdir(local_pacman_dir):
-                        text.text_formatting(_("Error occured in step of "),1,'error')
+                        text.text_formatting(_("Error occured in step of "), 1, 'error')
                 elif pac_action == "remove":
                     if package in os.listdir(local_pacman_dir).index():
-                        text.text_formatting(_("Error occured in step of "),1,'error')
+                        text.text_formatting(_("Error occured in step of "), 1, 'error')
             elif action_type == "2":
                 """ Currently simpliy checking avaible, functions of modify_add and modify_rmv maybe split into two function in which one of them is responsible for finding modifying site that can be used for repair, and adding or removing function """ 
                 try:
                     if (convert(step.text) in open(step[0].attrib["source"]).read() and step[0].attrib["type"] == "remove") or ((not convert(step.text) in open(tar_file).read() and step[0].attrib["type"] == "add")):
                         text.text_formatting(_("Error occured in step of "), 1, 'error')
                 except:
-                    text.text_formatting(_("Couldn't found target file"),1, 'error')
+                    text.text_formatting(_("Couldn't found target file"), 1, 'error')
             elif action_type == "3":
                 """ There ara some problem with checking this step, one apporach is that executing the reverse attributes defined in the step and reexecute original code, """
                 print("Bakalım ne olacak")
@@ -135,7 +136,7 @@ class Repair:
         dirlist = os.listdir(cons.sprpckg_dir)
         if package == "all":
             if not dirlist:
-                text.text_formatting(_("There is no installed suprapackage "),0 , 'info')
+                text.text_formatting(_("There is no installed suprapackage "), 0, 'info')
             else:
                 for fname in dirlist:
                     self.def_check(fname)
@@ -162,7 +163,7 @@ class FileModify:
     def modify_rmv(self,tar_file,srch,indicator,action,place,rplc,indent):
         """Functions for removing string from file"""
         a = self.get_prop(tar_file)
-        text.text_formatting("-> removing " + action + " from " + tar_file,1, 'debug')
+        text.text_formatting("-> removing " + action + " from " + tar_file, 1, 'info')
         try:
             with open(tar_file) as fin, NamedTemporaryFile(dir='.', delete=False) as fout:
                 counter = 0
@@ -193,7 +194,7 @@ class FileModify:
        
     def modify_add(self,tar_file,srch,indicator,action,place):
         """Functions for adding string to file"""
-        text.text_formatting("-> adding " + action + " to " + tar_file, 1, 'debug')
+        text.text_formatting("-> adding " + action + " to " + tar_file, 1, 'info')
         a = self.get_prop(tar_file)
 
         try:
@@ -229,7 +230,7 @@ class TextFormatting:
         self.tab_space = "   "
         for i in range(level):
             source = self.tab_space + source
-        if log_level == "info":
+        if log_level == "info" and cons.debug:
             logging.info(source)   
         elif log_level == "warning":
             logging.warning(source)
@@ -237,7 +238,8 @@ class TextFormatting:
             logging.debug(source)
         elif log_level == "error":
             logging.error(source)    
-        print(source)
+        if not cons.silence:
+            print(source)
 
 mdfy = FileModify()
 text = TextFormatting()
@@ -247,19 +249,19 @@ class DepConf:
         tree = etree.parse(cons.sprpckg_dir+source+".xml")
         root = tree.getroot()
         """ Resolving conflicts """
-        text.text_formatting(_(":: Check for conflicts..."), 0, 'debug')
+        text.text_formatting(_(">> Check for conflicts..."), 0, 'info')
         conflictcount = len(root[1])
         conflicts = root[1]
         if conflictcount > 0:
-            text.text_formatting(str(conflictcount) + _(" conflicts have found."), 1, 'debug')
-            text.text_formatting(_("Following suprapackage(s) will remove. "),0)
+            text.text_formatting(str(conflictcount) + _(" conflicts have found."), 1, 'info')
+            text.text_formatting(_("Following suprapackage(s) will remove. "), 0, 'info')
             for conf in root[1]:
                 try:
                     text.text_formatting(conf.text + " ==> " + get.description(conf.text), 1, '')
                 except:
                     text.text_formatting(conf.text + _(" ==> There is no description for this package"), 1, 'warning')
             if os.path.isfile(cons.sprpckg_dir + conf.text + ".xml"):
-                answer = input(_("Are you want to remove these packages (Y/N): "))
+                answer = input(_("Are you want to remove these packages (Y/N): ")) 
                 answer.upper()
             elif cons.confm:
                 answer = _("Y")
@@ -274,12 +276,13 @@ class DepConf:
                     else:
                         text.text_formatting(package + _(" is not installed"), 0, 'warning')
             else:
-                sys.exit(_("Suprapackage couldn't installed."))
+                text.text_formatting(package + _("Suprapackage couldn't installed."), 0, 'error')
+                sys.exit(1)
         else:
-            text.text_formatting(_("There is a no conflict"), 1, 'debug')
+            text.text_formatting(_("There is a no conflict"), 1, 'info')
             
     def dependencies(self,source,action):
-        text.text_formatting(_(":: Resolving dependencies.."), 0, 'info')
+        text.text_formatting(_(">> Resolving dependencies.."), 0, 'info')
         tree = etree.parse(cons.sprpckg_dir+source+".xml")
         root = tree.getroot()
         #Bağımlılıklar çözülüyor
@@ -289,10 +292,10 @@ class DepConf:
             text.text_formatting(str(dependcount) + _(" dependencies have found."), 1, 'info')
             #Tamamen kaldırma işlemi için ....
             if action == "remove":
-                text.text_formatting(_("Following suprapackage(s) will remove. "),1, 'info')
+                text.text_formatting(_("Following suprapackage(s) will remove. "), 1, 'info')
                 for dep in root[2]:
                     try:
-                        text.text_formatting(dep.text + " ==> " + get_description(dep.text),1)
+                        text.text_formatting(dep.text + " ==> " + get_description(dep.text), 1, 'info')
                     except:
                         text.text_formatting(dep.text + _(" ==> There is no description for this package"), 1, 'warning')
                 if cons.confm:
@@ -305,14 +308,15 @@ class DepConf:
                         package = dep.text
                         remove(package,"skip",source)
                 else:
-                    sys.exit(_("Dependencies coulnd't removed so remove process couldn't continue."))
+                    text.text_formatting(_("Dependencies coulnd't removed so remove process couldn't continue."), 0, 'error')
+                    sys.exit(1)
             else:
-                text.text_formatting(_("Following suprapackage(s) will install. "), 0, 'debug')
+                text.text_formatting(_("Following suprapackage(s) will install. "), 0, 'info')
                 for dep in root[2]:
                     try:
-                        text.text_formatting(dep.text + " ==> " + get_description(dep.text), 1, 'debug')
+                        text.text_formatting(dep.text + " ==> " + get_description(dep.text), 1, 'info')
                     except:
-                        text.text_formatting(dep.text + _(" ==> There is no description for this package"), 1, 'warning')
+                        text.text_formatting(dep.text + _(" ==> There is no description for this package"), 1, 'info')
                 if cons.confm:
                     answer = _("Y")
                 else:
@@ -324,11 +328,12 @@ class DepConf:
                         if not package_check(package):
                             install(package,"","") #İç içe bağımlılık sorunu olacak o neden ilave bir fonksiyon paramatresi ise bu soruyu bir kez sordurulabilir
                         else:
-                            text.text_formatting(":: " + package + _(" is already installed"), 0, 'info')
+                            text.text_formatting(">> " + package + _(" is already installed"), 0, 'info')
                         mdfy.modify_add(cons.sprpckg_dir+package+".xml","<Dependencies","'>"," " + source,"previous") 
                 else:
                     os.remove(cons.sprpckg_dir+source+".xml")
-                    sys.exit(_("Dependencies coulnd't installed so install process couldn't continue."))
+                    text.text_formatting(_("Dependencies coulnd't installed so install process couldn't continue."), 0, 'error')
+                    sys.exit(1)
         else:
             text.text_formatting(_("There is a no dependencies"), 1, 'info')
             
@@ -349,7 +354,7 @@ relationship = DepConf()
 def db_file_check():
     if not os.path.isfile(cons.log_file):
         logging.basicConfig(filename=cons.log_file, format='%(asctime)s:%(levelname)s:%(message)s',  datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.DEBUG)
-        text.text_formatting(_("Log file created"),0,'warning')
+        text.text_formatting(_("Log file created"), 0, 'warning')
     if not os.path.isfile(cons.db_dir+cons.db_file):
         try:
             text.text_formatting(_("Database could'nt found. Getting from server"), 0, 'warning')
@@ -460,7 +465,7 @@ def retrieve(place,url,file):
     
 
 def sync_repo():
-    text.text_formatting(_(":: Local database synchronizing with server"), 0, 'info')
+    text.text_formatting(_(">> Local database synchronizing with server"), 0, 'info')
     if not os.path.isfile(cons.db_dir+cons.db_file) or uptodate(cons.db_dir+cons.db_file,"local") != uptodate(cons.mirror+cons.db_file,"web"):
        try:
            retrieve(cons.db_dir,cons.mirror+cons.db_file,cons.db_dir+cons.db_file)
@@ -479,7 +484,8 @@ def package_check(package):
             
 def install(source, place, adress):
     if package_check(source) and not place == "local":
-       sys.exit(_(":: This suprapackage already installed."))
+        text.text_formatting(_(">> This suprapackage already installed."), 0, 'error')
+        sys.exit(1)
     
     if place == "local":
         try:
@@ -494,7 +500,6 @@ def install(source, place, adress):
             position = source.find('.')
             source = source[:position]
         except:
-            print(tree)
             text.text_formatting("Suprapackage source couldn't find, check suprapackege path", 0, 'error')
             sys.exit(0)
     else:
@@ -506,7 +511,7 @@ def install(source, place, adress):
         else:
             shutil.copyfile(cons.cachedir+source+".xml", cons.sprpckg_dir+"/"+source+".xml")
     tree = etree.parse(cons.sprpckg_dir+source+".xml")
-    text.text_formatting(":: " + source + _(" suprapackage is installing"), 0, 'info')
+    text.text_formatting(">> " + source + _(" suprapackage is installing"), 0, 'info')
     relationship.conflicts(source)
     relationship.dependencies(source,"")
     root = tree.getroot()
@@ -515,7 +520,7 @@ def install(source, place, adress):
     counter = 1
     for step in root[3]:
        action_type = step.attrib["type"]
-       text.text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing", 0, 'debug')
+       text.text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing", 0, 'info')
        #Alttaki kodu type 4 de de kullanıldığından fonksiyon haline gelse iyi olacak
        try:
            if action_type == "1":
@@ -536,7 +541,7 @@ def install(source, place, adress):
            elif action_type == "3":
                command = step.text
                if execute(command) != 0:
-                   text.text_formatting(_("Error occureed in step of ") + step + ", so the installation of suprapackge will be reverted " , 0, 'error')
+                   text.text_formatting(_("Error ") + step + _(", so the installation of suprapackge will be reverted ") , 0, 'error')
                    remove_action(source, "complete", step)
                    break
            elif action_type == "4":
@@ -586,7 +591,7 @@ def remove(source, rmv_type, dep_source):
     if not package_check(source):
         text.text_formatting(_("This suprapackage is not installed."), 0,  'error')
         sys.exit(1)
-    text.text_formatting(":: " + source + _(" suprapackage is removing"), 0, 'info')
+    text.text_formatting(">> " + source + _(" suprapackage is removing"), 0, 'info')
     if rmv_type == "complete":
        relationship.dependencies(source,"remove")
     local_dep = search.local_dependency(source," ")
@@ -626,7 +631,7 @@ def remove_action(source, rmv_type, access_point):
            remove_tag = step.attrib["remove_tag"]
        except KeyError:
            remove_tag = " "
-       text.text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing", 0, 'debug')
+       text.text_formatting("==> Step " + str(counter)+ " of " + str(steps) + " is executing", 0, 'info')
        try:
            if action_type == "1":
                if remove_tag == "skip":
@@ -736,7 +741,7 @@ def upgrade():
     counter = 0
     up_list = []
     for fname in dirlist:
-       if fname[-3:] == "xml" and upcontrol(fname[:-4],"local") != upcontrol(fname[:-4],"repo"):
+       if fname[-3:] == "xml" and upcontrol(fname[:-4],"local") != upcontrol(fname[:-4],"repo") and search.srch_pynr(fname[:-4],'Peynir/Name','find'):
            up_list.append(fname[:-4]);
            counter = counter + 1
     if len(up_list) == 0:
@@ -803,7 +808,13 @@ def main():
         if argv == "--no-confirm":
             cons.confm = True
             sys.argv.remove('--no-confirm')
-    for argv in sys.argv:  
+        if argv == "--debug":
+            cons.debug = True
+            sys.argv.remove('--debug')
+        if argv == "--silence":
+            cons.silence = True
+            sys.argv.remove('--silence')    
+    for argv in sys.argv:  #bu döngü yukarıdakike dahil edilebilir!!!
         if argv.find('--cache-dir') == 0:
             cons.cachedir = argv[12:].strip()
             if not cons.cachedir[len(cons.cachedir)-1:len(cons.cachedir)] == "/":
@@ -813,7 +824,7 @@ def main():
             
    
     if len(sys.argv) == 1:
-        sys.stderr.write(_('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n'))
+        sys.stderr.write(_(cons.command_output))
         sys.exit(1)
     elif sys.argv[1] == "-Sy":
         sync_repo()
@@ -825,10 +836,10 @@ def main():
         sync_repo()
         upgrade()    
     elif len(sys.argv) == 1:
-        sys.stderr.write(_('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n'))
+        sys.stderr.write(_(cons.command_output))
         sys.exit(1)
     elif sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        sys.stderr.write(_('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n'))
+        sys.stderr.write(_(cons.command_output))
         sys.exit(1)
     elif len(sys.argv) > 2:
         if sys.argv[1] == "-S":
@@ -861,14 +872,14 @@ def main():
             db_file_check()
             for i in raw_rqst:
                 rqst = i.lower()
-                text.text_formatting("Results for " + rqst,0)
+                text.text_formatting("Results for " + rqst, 0, 'info')
                 search.srch_pynr(rqst,'Peynir/Name','find')
         elif sys.argv[1] == "-Qs":
             argv_len = len(sys.argv)
             raw_rqst = sys.argv[2:argv_len]
             for i in raw_rqst:
                 rqst = i.lower()
-                text.text_formatting("Results for " + rqst,0)
+                text.text_formatting("Results for " + rqst, 0, 'info' )
                 db_file_check()
                 search.local_search(rqst) 
         elif sys.argv[1] == "-U":
@@ -882,20 +893,21 @@ def main():
                 package = package[position+1:]
             else:
                 adress = ""
-            if package[-3:] != "xml":
+            if package[-3:] != "xml" and "." in package:
+                text.text_formatting(_("Invalid package format"), 0, "error")
+                sys.exit(1)
+            else:
                 package = package+".xml"
              
             if not package_check(package[:-4]):
                 install(package,"local",adress)
             else:
-                text.text_formatting(_(":: This suprapackage already installed in your system."), 0, 'error')
-
-            
+                text.text_formatting(_(">> This suprapackage already installed in your system."), 0, 'error')
         else:
             text.text_formatting(_("Invalid argument: ") + sys.argv[1], 0, 'error')
             sys.exit(1)
     else:
-        sys.stderr.write(_('Usage: peynir [command] [suprapackage] \n Commands: \n        -S Install suprapackage \n        -U Install local suprapackage \n        -R Remove suprapackage \n        -Rs Remove suprapackage and its dependencies \n        -Sy Update repository \n        -Su Upgrade the system \n        -Ss Search suprapackege in repository \n        -Qs Search suprapackege in local \n        -h Display the help screen \n'))
+        sys.stderr.write(_(cons.command_output))
         sys.exit(1) 
              
 if __name__ == "__main__":
