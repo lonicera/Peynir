@@ -45,7 +45,7 @@ def conflicts(source):
         text.text_formatting(_("There is a no conflict"), 1, 'info')
             
 def dependencies(source,action):
-    from peynir import search
+    from peynir import search, functions
     text.text_formatting(_(">> Resolving dependencies.."), 0, 'info')
     root = functions.get_root(cons.sprpckg_dir+source+".xml")
     #Bağımlılıklar çözülüyor
@@ -106,6 +106,7 @@ def dependencies(source,action):
         text.text_formatting(_("There is a no dependencies"), 1, 'info')
             
 def rmv_local_dependencies(source):
+    from peynir import functions
     root = functions.get_root(cons.sprpckg_dir+source+".xml")
     dependcount = len(root[2])
     dependencies = root[2]

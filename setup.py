@@ -19,6 +19,8 @@ author="Şenol Alan",
         'console_scripts': ['peynir=peynir.peynir:main'],
     },
     packages=['peynir'],
+    install_requires=['argparse>=1.2.1',
+                    ],
     include_package_data=True,
     zip_safe = True
 )

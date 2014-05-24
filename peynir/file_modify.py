@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-
 from peynir import text_formatting as text, get_text
 import os, shutil
 from tempfile import NamedTemporaryFile
