@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import difflib
-import functions
-import constants as cons
-import text_formatting as text
+from peynir import functions, constants as cons, text_formatting as text 
 import gettext, os
-import functions
 gettext.bindtextdomain("peynir","/language")
 gettext.textdomain("peynir")
 _ = gettext.gettext

@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
-import text_formatting as text, os, shutil, get_text
+from peynir import text_formatting as text, get_text
+import os, shutil
 from tempfile import NamedTemporaryFile
 
 

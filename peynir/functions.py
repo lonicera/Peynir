@@ -3,14 +3,9 @@
 
 
 import os,logging, shutil, subprocess, sys
-import constants as cons
+from peynir import constants as cons, text_formatting as text, file_modify, dep_conf as relationship
 import urllib.request
-import text_formatting as text
-import file_modify
-import dep_conf as relationship
 import gettext
-import search
-import functions
 import xml.etree.ElementTree as etree
 
 gettext.bindtextdomain("peynir","/language")
@@ -229,6 +224,7 @@ def install(source, place, adress):
            sys.exit(1)
 
 def remove(source, rmv_type, dep_source):
+    from peynir import search
     if not suprapackage_check(source):
         text.text_formatting(_("This suprapackage is not installed."), 0,  'error')
         sys.exit(1)

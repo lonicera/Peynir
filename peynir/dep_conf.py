@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import file_modify as mdfy
-import constants as cons
-import functions
-import text_formatting as text, os, sys
+from peynir import file_modify as mdfy, constants as cons, text_formatting as text
+import os, sys
 import gettext
-import search
-
-
 gettext.bindtextdomain("peynir","/language")
 gettext.textdomain("peynir")
 _ = gettext.gettext
 
 def conflicts(source):
+    from peynir import functions
     root = functions.get_root(cons.sprpckg_dir+source+".xml")
     """ Resolving conflicts """
     text.text_formatting(_(">> Check for conflicts..."), 0, 'info')
@@ -49,6 +45,7 @@ def conflicts(source):
         text.text_formatting(_("There is a no conflict"), 1, 'info')
             
 def dependencies(source,action):
+    from peynir import search
     text.text_formatting(_(">> Resolving dependencies.."), 0, 'info')
     root = functions.get_root(cons.sprpckg_dir+source+".xml")
     #Bağımlılıklar çözülüyor

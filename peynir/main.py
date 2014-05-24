@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
-from peynir import text_formatting as text, search, functions, constants as cons
+import text_formatting as text
+import search
+import functions
+import constants as cons
 import argparse, sys
 import gettext, os
+import peynir
 gettext.bindtextdomain("peynir","/language")
 gettext.textdomain("peynir")
 _ = gettext.gettext
@@ -105,6 +109,3 @@ def main():
            functions.install(package,"local",adress)
        else:
            text.text_formatting(_(">> This suprapackage already installed in your system."), 0, 'error')
-             
-if __name__ == "__main__":
-    main()
