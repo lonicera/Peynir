@@ -34,7 +34,7 @@ def conflicts(source):
         if answer == _("Y"):
             for conf in root[1]:
                 package = conf.text
-                if suprapackage_check(package):
+                if functions.suprapackage_check(package):
                     remove(package,"","")
                 else:
                     text.text_formatting(package + _(" is not installed"), 0, 'warning')

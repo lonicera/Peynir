@@ -105,7 +105,7 @@ def upcontrol(srch,place,stopped=False):
 
 #Bu kısım düzenlenerek üstpaketle ilgili herhangi bir bilgi de çekilebilir.
 def get_description(package):
-    repo_root = functions.get_root(cons.repo)
+    repo_root = get_root(cons.repo)
     repo_search = repo_root[1].findall('Peynir/Name')
     repo_search1 = repo_root[1].findall('Peynir/Summary')
     for comp in range(len(repo_search)):

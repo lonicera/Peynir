@@ -10,6 +10,7 @@ gettext.textdomain("peynir")
 _ = gettext.gettext
 
 def main():
+    from peynir import functions
     if not os.geteuid()==0:
         sys.exit(_("You must be root to run this application, please use sudo and try again."))
     functions.db_file_check()
