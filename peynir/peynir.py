@@ -26,7 +26,7 @@ def main():
     parser.add_argument("-Syu", help="Upgrade the system", action="store_true")  
     parser.add_argument("-Ss", help="Search suprapackege in repository")  
     parser.add_argument("-Qs", help="Search suprapackege in local")
-    parser.add_argument("-O", help="Repair system or package (not fully implemented)")
+    #parser.add_argument("-O", help="Repair system or package (not fully implemented)")
     parser.add_argument("--noconfirm", help="Do not prompt for any confirmation", action="store_true")
     parser.add_argument("--cachedir", help="[path] Overrides the default location of the suprapackage cache directory.")
     parser.add_argument("--silence", help="No output", action="store_true")

@@ -6,3 +6,4 @@ TO-DO
     * Repair features may be added again
     * Some improvement in argparse
     * Localizations should be renewed
+    * Redesign output of commandline

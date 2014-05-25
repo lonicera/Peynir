@@ -140,9 +140,9 @@ def sync_repo(pacman):
     if not os.path.isfile(cons.db_dir+cons.db_file) or uptodate(cons.db_dir+cons.db_file,"local",pacman) != uptodate(cons.mirror+cons.db_file,"web",pacman):
        try:
            retrieve(cons.db_dir,cons.mirror+cons.db_file,cons.db_dir+cons.db_file)
-           text.text_formatting(_("Database successfully updated."), 0, 'info')
+           text.text_formatting(_("Database successfully updated."), 1, 'info')
        except:
-           text.text_formatting(_("Database couldn't updated."), 0, 'error')
+           text.text_formatting(_("Database couldn't updated."), 1, 'error')
            sys.exit(1)
     else:
        text.text_formatting(_("Database already updated."), 0, 'info')
