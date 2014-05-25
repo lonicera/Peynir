@@ -18,6 +18,7 @@ author="Şenol Alan",
     entry_points = {
         'console_scripts': ['peynir=peynir.peynir:main'],
     },
+    packages=['peynir'],
     include_package_data=True,
     zip_safe = True
 )
